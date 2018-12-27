@@ -1,0 +1,698 @@
+Object中有哪些公共的方法,分别有什么作用
+ 1):hashcode:
+       Java中的hashCode方法就是根据一定的规则将与对象相关的信息（对象的字段等）映射成一个数值，这个数值称作为散列值。
+       其主要作用是为了配合基于散列的集合一起正常运行，这样的散列集合包括HashSet、HashMap以及HashTable。当集合要添加新的对象时，
+       先调用这个对象的hashCode方法，得到对应的hashcode值，实际上在HashMap的具体实现中会用一个table保存已经存进去的对象的hashcode值，
+       如果table中没有该hashcode值，它就可以直接存进去，不用再进行任何比较了；如果存在该hashcode值，就调用它的equals方法与新元素进行比较，相同的话就不存了，不相同就散列其它的地址。
+       这样解决了向含有大量数据的集合中添加元素时，大量频繁的操作equals方法的问题。
+      
+       对应的是 内存地址址System.identityHashCode(obj)  https://www.cnblogs.com/godtrue/p/6395098.html
+
+ 2):equals:
+      equals方法（equals方法不能作用于基本数据类型的变量），如果没有对equals方法进行重写，则比较的是引用类型的变量所指向的对象的地址；
+          诸如String、Date等类对equals方法进行了重写的，比较的是所指向的对象的内容。
+
+ 3):wait方法: final  
+      暂停的是持有锁的对象，所以想调用wait()必须为：对象.wait();
+
+ 4):notify方法: final 
+     唤醒的是等待锁的对象，调用:对象.notify();
+  https://blog.csdn.net/iteye_16780/article/details/81623158  讲解 详细的c语言的机制
+
+    线程的模型:
+      https://www.cnblogs.com/varcp/p/5434716.html
+      就绪、阻塞，运行
+
+
+ 5):getClass方法 final 
+    它 会返回一个你的对象所对应的一个Class的对象，这个返回来的对象保存着你的原对象的类信息，比如你的原对象的类名叫什么，类里有什么方法，字段等。在 高级编程当中用的很多，和反射相关
+
+
+  6):clone方法  
+     对内部属性的一种的copy
+
+     clone()的作用是创建一个该对象的一个副本，并将对象的数据复制到该副本中
+     根据复制程度的不同，clone可以分为：  
+     浅拷贝：使用clone()即为浅拷贝，默认的拷贝方式是复制一个新的原对象，并赋予原对象相同的全局对象的值和引用。即原对象和复制对象的全局引用变量指向的是一个相同的对象空间。 
+     深拷贝：需要自己实现，即将原对象中的全局引用变量指向的对象也复制一份放入复制对象中。
+
+ 
+  7):finalize：
+     该方法用于释放资源。因为无法确定该方法什么时候被调用，很少使用。
+
+
+2:请分别简述:ArrayList,HashSet,TreeSet,HashMap,TreeMap,ConncurrentHashMap,LinkedHashMap 的区别:
+    映射（Map），集合（Set），列表（List），散列表（Hashtable）
+    Collection接口有三个常用的子接口，Set（集合），List（列表），Queue（队列）。
+    Set： Conllection允许重复值，但是Set不允许重复值。
+    Map：存储Key-Value数据，Map中不允许有重复的Key，但是可以有重复的Value，跟Conlection没有任何关系。
+    List： 存储元素有序，引入的位置索引，允许重复值。
+
+   ArrayList： 
+        采用的是数组形式来保存对象的，这种方式将对象放在连续的位置中，所以最大的缺点就是插入删除时非常麻烦,最终使用:
+	    elementData = Arrays.copyOf(elementData, newCapacity);
+	    //使用 System.arraycopy  浅拷贝
+	    System.arraycopy(original, 0, copy, 0,
+                         Math.min(original.length, newLength));
+            当每次 扩容的时候:以 1.5倍的速度 扩容:
+	       private void grow(int minCapacity) {
+			// overflow-conscious code
+			int oldCapacity = elementData.length;
+			//扩容
+			int newCapacity = oldCapacity + (oldCapacity >> 1);
+			if (newCapacity - minCapacity < 0)
+			    newCapacity = minCapacity;
+			if (newCapacity - MAX_ARRAY_SIZE > 0)
+			    newCapacity = hugeCapacity(minCapacity);
+			// minCapacity is usually close to size, so this is a win:
+			//使用系统的arrayCopy深度拷贝  底层就是新建一个新的长度的数组，将原始的内容拷贝进入对应的位置!
+			elementData = Arrays.copyOf(elementData, newCapacity);	
+	       }
+         
+	 数组容器，自动拓展(1.5倍)，获取快 index，插入慢,查询也是慢(有序)
+     
+   LinkedList：
+        采用的将对象存放在独立的空间中，而且在每个空间中还保存下一个链接的索引.但是缺点就是查找非常麻烦 要丛第一个索引开始
+         LinkedList定义了一个双向的指针。每一个Node，都有一个前驱和后驱，java中没有指针，只有引用。
+	 todo:查看源码
+	   
+         
+          在实际应用中，如果对List的中间和开头插入或移除时，因为ArrayList需要在后面所有元素往后一位，需要复制和移动的开销，
+       而LinkedList只需要改变两个连接，它在开头和中间插入一个数据的时间是固定的，LinkedList，性能会优于ArrayList。
+       但是LinkedList不支持随机的访问，如果需要随机的访问，和只在最后插入数据，就是用ArrayList同时LinkedList还可以用作栈和队列或双端队列使用。
+
+        双向链表，插入删除快，查询慢(有序)
+
+   HashSet：-->HashMap
+        Set中不允许重复值，但是HashSet很容易查询到里面的一个元素，HashSet专门为快速查找进行了优化。
+	HashSet是继承了Set接口的，里面的元素是无序的，它就相当于是一个HashMap集合，键是存储的元素，
+	所对应的值是系统映射的一个虚拟值，然后能够快速的查找到元素的位置。
+        HashSet是无序的，要是想有序的话，使用TreeSet，LinkedHashMap
+
+        todo:例子的测试  插入数据具体的步骤，以及 插入相同key.hashcode值的 
+   
+        无序:数组+链表容器
+        
+   TreeSet：TreeMap:
+        对Map的排序顺序采用的是黑红二叉树算法的原理进行排序，具体可以理解这篇文章。
+	 http://blog.csdn.net/chenssy/article/details/26668941
+
+	 红黑树又称红-黑二叉树，它首先是一颗二叉树，它具体二叉树所有的特性。同时红黑树更是一颗自平衡的排序二叉树。
+
+             我们知道一颗基本的二叉树他们都需要满足一个基本性质--即树中的任何节点的值大于它的左子节点，且小于它的右子节点。
+         按照这个基本性质使得树的检索效率大大提高。我们知道在生成二叉树的过程是非常容易失衡的，最坏的情况就是一边倒（只有右/左子树）， 
+	 这样势必会导致二叉树的检索效率大大降低（O(n)），所以为了维持二叉树的平衡，大牛们提出了各种实现的算法，如：AVL，SBT，伸展树，TREAP ，红黑树等等。
+
+
+            平衡二叉树必须具备如下特性：它是一棵空树或它的左右两个子树的高度差的绝对值不超过1，
+	 并且左右两个子树都是一棵平衡二叉树。也就是说该二叉树的任何一个等等子节点，其左右子树的高度都相近。
+
+            1、每个节点都只能是红色或者黑色
+            2、根节点是黑色
+            3、每个叶节点（NIL节点，空节点）是黑色的。
+            4、如果一个结点是红的，则它两个子节点都是黑的。也就是说在一条路径上不能出现相邻的两个红色结点。
+            5、从任一节点到其每个叶子的所有路径都包含相同数目的黑色节点。
+         
+	    左旋、右旋、着色:
+	       进行插入数据的时候，进行比较，右结点大于左节点的值，如果新加入的值 放进入哪个位置，进行检测满不满足 5个原则，如果不满足 进行 左旋 或者右旋 重新满足以上5个条件
+
+
+   HashMap:
+        底层主要是基于数组和链表来实现的，它之所以有相当快的查询速度主要是因为它是通过计算散列码来决定存储的位置。
+	HashMap中主要是通过key的hashCode来计算hash值的，只要hashCode相同，计算出来的hash值就一样。
+	如果存储的对象对多了，就有可能不同的对象所算出来的hash值是相同的，这就出现了所谓的hash冲突。
+	学过数据结构的同学都知道，解决hash冲突的方法有很多，HashMap底层是通过链表来解决hash冲突的。
+  
+        todo：hashMap中的key的hashCode一样，值不一样，通过链表中增加，获取数据的时候，哪一个?
+       
+         /**
+	     * 其中按照:
+	     *   n = (tab = resize()).length;
+	     *   index= (n - 1) & hash
+	     *
+	     *   index位置 存放数值
+	     *
+	     *   如果扩容:
+	     *      之前的位置对应的值 如何重放???
+         */
+
+          hashMap获取数据的时候:get()
+
+	       找到 对应key的hashCode 对应(n-1 & hashcode)=index 位置 ，
+	         判断e.key.hashcode==key.hashcode &&  (key==e.key || key.equals(e)  循环列表!
+
+   TreeMap:
+       对Map的排序顺序采用的是黑红二叉树算法的原理进行排序
+        
+  ConncurrentHashMap:
+       加了锁:
+
+  LinkedHashMap: https://www.cnblogs.com/xiaoxi/p/6170590.html
+        它相当于是在HashMap中插入了一个双向链表，然后每次插入的数据按照插入的顺序来进行排序，
+	它相当于定义了一个双向链表，来把所有的Entry串联起来。并不保存Key和Value。
+
+	基于hashMap的存储，加上 head的 before,after 的 记录先后的插入的顺序!
+	LRU least recent used 最近最少使用：用的容器就是 linkedHashMap
+	
+
+  hashTable:(与hashMap的区别)
+      
+      可以参考这个:http://www.importnew.com/24822.html
+       1：数据结构
+       2:  算法--需要有算法在哈希桶内的键值对多到一定程度时，扩充哈希表的大小（数组的大小）。本小节比较这两个类在算法层面有哪些不同。
+       3:  线程安全
+
+3:java中有哪些引用方式,请作详细解释 https://www.cnblogs.com/huajiezh/p/5835618.html
+   3.1):
+       java内存管理分为内存分配和内存回收，都不需要程序员负责，垃圾回收的机制主要是看对象是否有引用指向该对象。
+       java对象的引用包括
+          强引用，软引用，弱引用，虚引用
+
+       强引用:
+          是指创建一个对象并把这个对象赋给一个引用变量
+          强引用有引用变量指向时永远不会被垃圾回收，JVM宁愿抛出OutOfMemory错误也不会回收这种对象
+
+       软引用:
+          如果一个对象具有软引用，内存空间足够，垃圾回收器就不会回收它；
+          如果内存空间不足了，就会回收这些对象的内存。只要垃圾回收器没有回收它，该对象就可以被程序使用。
+          软引用可用来实现内存敏感的高速缓存,比如网页缓存、图片缓存等。使用软引用能防止内存泄露，增强程序的健壮性。   
+          SoftReference的特点是它的一个实例保存对一个Java对象的软引用， 该软引用的存在不妨碍垃圾收集线程对该Java对象的回收。
+          也就是说，一旦SoftReference保存了对一个Java对象的软引用后，在垃圾线程对 这个Java对象回收前，SoftReference类所提供的get()方法返回Java对象的强引用。
+          另外，一旦垃圾线程回收该Java对象之 后，get()方法将返回null。
+        
+	   MyObject aRef = new  MyObject();  
+           SoftReference aSoftRef=new SoftReference(aRef);  
+
+	   对于这个MyObject对象，有两个引用路径，一个是来自SoftReference对象的软引用，一个来自变量aReference的强引用，所以这个MyObject对象是强可及对象。
+           我们可以结束aReference对这个MyObject实例的强引用:  "aRef = null"
+
+
+	   此后，这个MyObject对象成为了软引用对象。如果垃圾收集线程进行内存垃圾收集，并不会因为有一个SoftReference对该对象的引用而始终保留该对象。
+           Java虚拟机的垃圾收集线程对软可及对象和其他一般Java对象进行了区别对待:软可及对象的清理是由垃圾收集线程根据其特定算法按照内存需求决定的。
+           也就是说，垃圾收集线程会在虚拟机抛出OutOfMemoryError之前回收软可及对象，而且虚拟机会尽可能优先回收长时间闲置不用的软可及对象，
+	    对那些刚刚构建的或刚刚使用过的“新”软可反对象会被虚拟机尽可能保留。
+
+
+	    那么当这个SoftReference所软引用的aMyOhject被垃圾收集器回收的同时，ref所强引用的SoftReference对象被列入ReferenceQueue。
+	    也就是说，ReferenceQueue中保存的对象是Reference对象，而且是已经失去了它所软引用的对象的Reference对象。
+	    另外从ReferenceQueue这个名字也可以看出，它是一个队列，当我们调用它的poll()方法的时候，如果这个队列中不是空队列，那么将返回队列前面的那个Reference对象。
+
+            在任何时候，我们都可以调用ReferenceQueue的poll()方法来检查是否有它所关心的非强可及对象被回收。
+	    如果队列为空，将返回一个null,否则该方法返回队列中前面的一个Reference对象。利用这个方法，
+	    我们可以检查哪个SoftReference所软引用的对象已经被回收。于是我们可以把这些失去所软引用的对象的SoftReference对象清除掉。常用的方式为:
+
+	    SoftReference ref = null;  
+            while ((ref = (EmployeeRef) q.poll()) != null) {  
+               // 清除ref  
+            }  
+
+
+        弱引用:
+	   弱引用也是用来描述非必需对象的，当JVM进行垃圾回收时，无论内存是否充足，都会回收被弱引用关联的对象。
+	   在java中，用java.lang.ref.WeakReference类来表示。下面是使用示例：
+
+	      public class test {  
+		    public static void main(String[] args) {  
+			WeakReference<People>reference=new WeakReference<People>(new People("zhouqian",20));  
+			System.out.println(reference.get());  
+			System.gc();//通知GVM回收资源  
+			System.out.println(reference.get());  
+
+			//People people=new People("zhouqian",20);  
+			//WeakReference<People>reference=new WeakReference<People>(people);//<span style="color:#FF0000;">关联强引用</span>  
+			//System.out.println(reference.get());  
+			//System.gc();  
+			//System.out.println(reference.get());   
+			//这个结果也不一样了
+		    }  
+	      }  
+		class People{  
+		    public String name;  
+		    public int age;  
+		    public People(String name,int age) {  
+			this.name=name;  
+			this.age=age;  
+		    }  
+		    @Override  
+		    public String toString() {  
+			return "[name:"+name+",age:"+age+"]";  
+		    }  
+		}  
+		输出结果：  
+
+
+		第二个输出结果是null，这说明只要JVM进行垃圾回收，被弱引用关联的对象必定会被回收掉。不过要注意的是，
+		 这里所说的被弱引用关联的对象是指只有弱引用与之关联，如果存在强引用同时与之关联，则进行垃圾回收时也不会回收该对象（软引用也是如此）
+                弱引用可以和一个引用队列（ReferenceQueue）联合使用，如果弱引用所引用的对象被JVM回收，这个软引用就会被加入到与之关联的引用队列中。
+
+
+         虚引用:
+
+	        虚引用和前面的软引用、弱引用不同，它并不影响对象的生命周期。在java中用java.lang.ref.PhantomReference类表示。
+		如果一个对象与虚引用关联，则跟没有引用与之关联一样，在任何时候都可能被垃圾回收器回收。
+                要注意的是，虚引用必须和引用队列关联使用，当垃圾回收器准备回收一个对象时，如果发现它还有虚引用，就会把这个虚引用加入到与之 关联的引用队列中。
+		程序可以通过判断引用队列中是否已经加入了虚引用，来了解被引用的对象是否将要被垃圾回收。
+		如果程序发现某个虚引用已经被加入到引用队列，那么就可以在所引用的对象的内存被回收之前采取必要的行动。
+	    
+	         import java.lang.ref.PhantomReference;  
+		 import java.lang.ref.ReferenceQueue;  
+		 public class Main {  
+		    public static void main(String[] args) {  
+			ReferenceQueue<String> queue = new ReferenceQueue<String>();  
+			PhantomReference<String> pr = new PhantomReference<String>(new String("hello"), queue);  
+			System.out.println(pr.get());  
+		    }  
+		 }  
+
+                 //始终为空:
+		   
+
+       软引用和弱引用
+          对于强引用，我们平时在编写代码时经常会用到。而对于其他三种类型的引用，使用得最多的就是软引用和弱引用，
+	  这2种既有相似之处又有区别。它们都是用来描述非必需对象的，但是被软引用关联的对象只有在内存不足时才会被回收，而被弱引用关联的对象在JVM进行垃圾回收时总会被回收。
+
+	   get方法用来获取与软引用关联的对象的引用，如果该对象被回收了，则返回null。
+           在使用软引用和弱引用的时候，我们可以显示地通过System.gc()来通知JVM进行垃圾回收，但是要注意的是，
+	    虽然发出了通知，JVM不一定会立刻执行，也就是说这句是无法确保此时JVM一定会进行垃圾回收的。
+
+
+       如何利用软引用和弱引用解决OOM问题
+　　    前面讲了关于软引用和弱引用相关的基础知识，那么到底如何利用它们来优化程序性能，从而避免OOM的问题呢？
+　　    下面举个例子，假如有一个应用需要读取大量的本地图片，如果每次读取图片都从硬盘读取，则会严重影响性能，
+           但是如果全部加载到内存当中，又有可能造成内存溢出，此时使用软引用可以解决这个问题。
+
+　　设计思路是：用一个HashMap来保存图片的路径 和 相应图片对象关联的软引用之间的映射关系，在内存不足时，
+                          JVM会自动回收这些缓存图片对象所占用的空间，从而有效地避免了OOM的问题。在Android开发中对于大量图片下载会经常用到。
+
+
+       
+4:java线程同步的方式有哪些
+  https://www.cnblogs.com/XHJT/p/3897440.html
+
+  1:同步方法
+  2:同步代码块
+  3:使用重入锁实现线程同步 ReentrantLock
+  4:使用局部变量实现线程同步 ThreadLocal 
+     注：ThreadLocal与同步机制 
+        a.ThreadLocal与同步机制都是为了解决多线程中相同变量的访问冲突问题。 
+        b.前者采用以"空间换时间"的方法，后者采用以"时间换空间"的方式
+ 
+  5: 使用阻塞队列实现线程同步:LinkedBlockingQueue
+  6: 使用原子变量实现线程同步 AtomicInteger 
+
+5:说说你对aidl的理解，以及实现aidl的步骤和流程 https://www.jianshu.com/p/4fb29c5012de
+   常说AIDL：
+       安卓的一种跨进程通信的方式，其实不太严谨，应该说Binder才是一种跨进程通信的方式，而AIDL是Binder的一种具体应用，
+       有点类似于网络中的传输层和应用层，IBinder有自己的通信协议，负责建立和维护连接，发送数据，
+       而AIDL则定义了更上一层的传输内容，而像ContentProvider、广播同样是利用IBinder进行工作的。
+
+    AIDL的核心是Binder，我们通过AIDL文件来描述接口，使得到一个封装好的IBinder代理，来实现接口的远程调用。
+    Binder是Android里面一个很重要的概念，是Android各种ManagerService比如AMS、PMS的工作基础，
+    如果要深入理解Android系统，就不得不理解Binder的原理。
+
+
+     5.1:自定义接口的IBookManager.aidl文件:
+         interface IBookManager extends IInterface {
+            List<Book> getBookList() throws RemoteException;
+
+	    void addBook(Book var1) throws RemoteException;
+
+	    void registerListener(IOnNewBookArrivedListener var1) throws RemoteException;
+
+	    void unregisterListener(IOnNewBookArrivedListener var1) throws RemoteException;
+
+            .............
+	 }
+
+     5.2:定义静态的内部类 Stub extends Binder implements IBookManager{
+     
+         //操作符 
+	 private static final String DESCRIPTOR = "commerce.zhangyang.com.chaptertwo.aidl.IBookManager";
+         static final int TRANSACTION_getBookList = 1;
+         static final int TRANSACTION_addBook = 2;
+         static final int TRANSACTION_registerListener = 3;
+         static final int TRANSACTION_unregisterListener = 4;
+
+	 构造函数
+	 静态的asInterface(IBinder obj)
+	 IInterface接口的asBinder函数
+	 onTransact 服务端响应的 操作的函数 将结果写入 reply中，返回到客户端
+
+
+	 //静态内部类 proxy 实现 IBookerManager{
+		    构造函数
+		    asBinder函数
+		    getInterfaceDescriptor 函数
+
+		    以及各个的 接口的实现功能的函数:将传入的参数写入到data中,同时传递 reply的参数，使用IBinder类型的 mRemote参数 执行 transact函数
+		    执行的时候 进行挂起，等待reply返回，获取结果，通过Parcel的 createTypedArrayList等函数 (Book.CREATOR)进行创建 结果集合函数
+	    }
+
+     }
+
+
+6:如何对图片进行采样率压缩，加入图片是test.jpg,请写出核心步骤
+   1:首先获取屏幕的分辨率
+      BitmapFactory.Options options = new BitmapFactory.Options();
+      options.inJustDecodeBounds = true;
+      BitmapFactory.decodeFile(imagePath,options);
+
+   2:获取图片的分辨率
+   int height = options.outHeight;//获取原始图片的高度 
+   int width = options.outWidth;//获取原始图片的宽度 
+
+   3:计算缩放比例
+   float xScale=requestWidth/width
+   float yScale=requestHeight/height
+   float sample=xScale>yScale?xScale:yScale
+
+   4:显示图片
+      BitmapFactory.Options options = new BitmapFactory.Options();
+      options.sampleSize=sample
+      options.inJustDecodeBounds = false;
+      BitmapFactory.decodeFile(imagePath,options);
+
+
+   额外补充:
+        图片压缩：分为质量压缩，尺寸压缩，采样率压缩，微信压缩（哈夫曼编码）（前三个不是重点，重点是第四种）
+         https://blog.csdn.net/maqianli23/article/details/53980798
+
+	1:质量压缩:
+	    bmp.compress(Bitmap.CompressFormat.JPEG, options, baos);
+
+         2. 尺寸压缩
+              通过缩放图片像素来减少图片占用内存大小
+	      // 尺寸压缩倍数,值越大，图片尺寸越小
+
+	    int ratio = 4;
+	    // 压缩Bitmap到对应尺寸 直接创建 bitmap
+	    Bitmap result = Bitmap.createBitmap(bmp.getWidth() / ratio, bmp.getHeight() / ratio, Config.ARGB_8888);
+            //通过画布 绘制到result
+	    Canvas canvas = new Canvas(result);
+	    //设置区域
+	    Rect rect = new Rect(0, 0, bmp.getWidth() / ratio, bmp.getHeight() / ratio);
+            //将 源bmp对象 绘制到 result中
+	    canvas.drawBitmap(bmp, null, rect, null);
+            //字节输出数组 
+	    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+	    // 把压缩后的数据存放到baos
+	    result.compress(Bitmap.CompressFormat.JPEG, 100 ,baos);
+	    try {
+	        //最后将 字节输出数组 输出到对应的 字节输出流中!
+		FileOutputStream fos = new FileOutputStream(file);
+		fos.write(baos.toByteArray());
+		fos.flush();
+		fos.close();
+	    } catch (Exception e) {
+		e.printStackTrace();
+	    }
+
+           3:采样率压缩：通过降低图片像素来减小图片的大小
+             // 数值越高，图片像素越低
+           int inSampleSize = 4;
+           BitmapFactory.Options options = new BitmapFactory.Options();
+           options.inJustDecodeBounds = true;//为true的时候不会真正加载图片，而是得到图片的宽高信息。
+           //采样率
+           options.inSampleSize = inSampleSize;
+           Bitmap bitmap = BitmapFactory.decodeStream(filePath,null ,options);
+           ByteArrayOutputStream baos = new ByteArrayOutputStream();
+           // 把压缩后的数据存放到baos中
+           bitmap.compress(Bitmap.CompressFormat.JPEG, 100 ,baos);
+    
+           4:哈夫曼编码 最优二叉数:
+	      http://www.cnblogs.com/qionglouyuyu/p/4850679.html
+
+	      Dijkstra:https://blog.csdn.net/qq_35644234/article/details/60870719
+
+	      最为接近微信 的图片压缩算法Luban
+	         https://blog.csdn.net/yang_niuxxx/article/details/53096769
+
+7:Touch事件传递流程和分发机制
+     https://blog.csdn.net/ns_code/article/details/49848801
+
+     简单描述:
+         1、首先需要明白，Android中，Touch事件的分发分服务端和应用端。在Server端由WindowManagerService（WMS，窗口管理服务，不懂的自行脑补）负责采集和分发的，
+	      在client端则是由ViewRootImpl（内部有个mView变量指向View树的根 ，负责控制View树的UI绘制和事件消息的分发）负责分发的。
+
+         2、WMS在启动之后，经过逐层调用，会在native层启动两个线程：InputReaderThread 和 InputDispatchThread，前者用来读取输入事件，
+               后者用来分发输入事件，输入事件经过nativie层的层层传递，最终会传递到java层的ViewRootImpl中，调用
+               ViewPostImeInputStage（ViewRootImpl的内部类）中的各个方法来分发不同的事件，而Touch事件是在processPointerEvent方法进行分发的（这部分代码很单，可自行查看）。
+
+         3、processPointerEvent方法中调用mView.dispatchPointerEvent(event)方法，这里的mView就是在创建窗口后通过调用root.setView传进
+              来的DecorView，而dispatchPointerEvent方法会对event进行判断，如果是Touch事件的话，就调用dispatchTouchEvent将该事件分发DecorView，这样，Touch事件就传递到了View树中了。
+              其实从 decorView 中的 dispatchTouchEvent事件中,进行(Window.Callback.dispatchTouchEvent)反调用activity中的dispatchTouchEvent方法,最终还是会调用getWindow().superDispatchTouchEvent-
+	      mDecor.superDispatchTouchEvent(event)  decorView中的super.dispatchTouchEvent(event); 中的ViewGroup中的dispatchTouchEvent方法!
+
+
+	  补充:
+	       这里需要特别注意的是，Touch事件从server端传递到client端采用的IPC方式并不是Binder，而是共享内存和管道，至于为什么不采用Binder，
+	       应该是共享内存的效率更高，而管道（注意，两个管道，分别负责不同方向的读和写）只负责通知是否有事件发生，
+	       传递的只是一个很简单的字符串，因此并不会太多地影响到IPC的效率。
+              上图中，只有WMS、ViewRootImpl、InputManagerService、InputQueue是在FrameWork层实现的，其他部分都是在native层实现的，native 层的代码没有细看，
+	      参考了些网上的一些资料和公司内部的一些分享，把整个流程串通了，这部分代码，如果时间充足，可以深入研究下。
+              在sever端中，InputReader和InputDispatcher是native 层的两个线程，前者不断地从EventHub中读取事件（包括所有的事件，对不同的事件会做判断处理），
+              后者则不断地分发InputReader读取到的事件。而实际的分发操作时在InputPublish中进行的，它里面保存的有一个指向server端InputChannel端的指针，
+	      和一个指向ShareMemory（共享内存）的指针，当有事件要分发时，它会将事件写入到ShareMemory中，并且传递一个特定的字符串给InputChannel，
+	      由inutChannel将该字符串写入到管道中。在client端，一旦InputChannel从管道中读取到有事件分发过来，便会通知InPutConsumer从ShareMemory中读取具体的事件，
+	      并传递到framework层的InputQueue中。同样，一旦事件消费完毕，client端会通过管道告诉server端，事件已经消费完毕，流程与上面的似。
+
+	     
+8:Git相关:
+   8.1:新建分支一个test
+        git branch test
+   8.2:在test分支修改后,提交这些修改
+        git add *
+	git commit -m test
+	git push origin test
+   8.3:将test分支合并到develop分支上
+        git checkout developer
+	git merge test
+
+   8.4:推送developer分支到远程服务器上
+        git add *
+	git commit -m origin devloper
+	git push origin devloper
+  
+   8.5:更新本地devloper分支
+        git pull origin devloper
+
+9:简述一下jvm的gc几种方式
+     
+     9.1-标记-清除算法:
+         标记：标记的过程其实就是，遍历所有的GC Roots，然后将所有GC Roots可达的对象标记为存活的对象。
+         清除：清除的过程将遍历堆中所有的对象，将没有标记的对象全部清除掉。
+ 
+         就是当程序运行期间，若可以使用的内存被耗尽的时候，GC线程就会被触发并将程序暂停，随后将依旧存活的对象标记一遍，
+	 最终再将堆中所有没被标记的对象全部清除掉，接下来便让程序恢复运行。
+
+         缺点:
+	       1、首先，它的缺点就是效率比较低（递归与全堆对象遍历），而且在进行GC的时候，需要停止应用程序，这会导致用户体验非常差劲，
+	            尤其对于交互式的应用程序来说简直是无法接受。试想一下，如果你玩一个网站，这个网站一个小时就挂五分钟，你还玩吗？
+
+               2、第二点主要的缺点，则是这种方式清理出来的空闲内存是不连续的，这点不难理解，我们的死亡对象都是随即的出现在内存的各个角落的，
+	            现在把它们清除之后，内存的布局自然会乱七八糟。而为了应付这一点，JVM就不得不维持一个内存的空闲列表，这又是一种开销。而且在分配数组对象的时候，寻找连续的内存空间会不太好找。
+
+                    一个算法有缺点，高人们自然会想尽办法去完善它的。而接下来我们要介绍的两种算法，皆是在标记/清除算法的基础上优化而产生的。
+
+     9.2-复制回收算法： https://blog.csdn.net/pzqingchong/article/details/79283603
+
+                Copying GC是Marvin L.Minsky在1963年研究出来的算法。就是指把某个空间里的活动对象复制到其它空间，把原空间里的所有对象都回收掉。
+	   在此，将复制活动对象的原空间称为From空间，将粘贴活动对象的新空间称为To空间。
+	
+	   但是必须保证:
+	         From空间和To空间大小必须一致。这是为了保证能把From空间中的所有活动对象都收纳到To空间里。 
+	    
+	   执行的过程:
+	       执行GC。首先是从根直接引用的对象B和G，B先被复制到了To空间。 
+               将B被复制后生成的对象称为B’。在From空间中B已经被打上了复制完成标签。但是，这里只把B’复制了过来，它的子对象A还在From空间里，下面把A复制到To空间里。 
+	       这次才是真正意义上复制了B。因为A没有子对象，所以对A的复制就完成了。 接下来，要和复制B一样从根引用复制G，以及其子对象E。虽然B也是G的子对象，不过因为已经复制完B了
+                        
+           优点:
+	       优秀的吞吐量(执行的效率吧)：
+	          GC标记-清除算法消耗的吞吐量是搜索活动对象（标记阶段）所花费的时间和搜索整体堆（清除阶段）所花费的时间之和。 
+		  另一方面，因为GC复制算法只搜索并复制活动对象，所以跟一般的GC标记-清除算法相比，它能在短时间内完成GC，也就是说其吞吐量优秀。 
+                  尤其是堆越大，差距越明显。GC标记-清除算法在清除阶段所花费的时间会不断增加，但GC复制算法就不会。因为它消耗的时间是与活动对象的数量成比例的。
+
+	       可实现高速分配:
+	           GC复制算法不使用空闲链表，因为分块是一块连续的内存空间。因此，调查这个分块的大小，只要这个分块大小不小于所申请的大小，那么移动指针就可以进行分配了。 
+		   比起GC标记-清除算法和引用计数算法等使用空闲链表的分配，GC复制算法明显快得多。使用空闲链表是为了找到满足要求的分块，需要遍历空闲链表，
+		   最坏的情况是我们不得不从空闲链表中取出最后一个分块，这样就用了大量时间把所有分块都调查一遍。
+
+	       不会发生碎片化：
+	           基于算法性质，活动对象被集中安排在From空间的开头。像这样把对象重新集中，放在堆中一端的行为叫作压缩。在GC复制算法中，每次运行GC时都会执行压缩。 
+                   因此GC算法有个非常优秀的特点，就是不会发生碎片化，也就是说可以安排分块允许范围内大小的对象。 
+                   另一方面，在GC标记-清除算法等GC算法中，一旦安排了对象，原则上就不能再移动它了，所以会多多少少产生碎片化。
+
+
+	       与缓存兼容:
+	           在GC复制算法中有引用关系的对象会被安排在堆里离彼此较近的位置。B’引用A’，G’引用E’的顺序排列。这种情况有一个优点，
+		   那就是mutator执行速度极快。很多CPU都通过缓存来来高速读取位置较近的对象。这也是借助压缩来完成的，通过压缩来把有引用关系的对象安排在堆中较近的位置。
+
+
+           缺点:
+	       堆使用率低下：
+	           GC复制算法把堆分成二等分，通常只能利用其中一半来安排对象。也就是说只有一半堆能被使用，相比其他能使用整个堆的GC算法而言，这是GC复制算法的一个重大缺陷
+
+	       不兼容保守式GC算法：
+	           GC标记-清除算法有着跟保守式GC算法相兼容的优点。因为GC标记-清除算法不用移动对象。 
+		   另一方面，GC复制算法必须移动对象重写指针，所以有着跟保守式GC算法不相容的性质。虽然有限制条件，GC复制算法和保守式GC算法可以进行组合。
+
+	        递归调用函数:
+		    在算法中，复制某个对象时要递归复制它的子对象，因此在每次进行复制的时候都要调用函数，由此带来的额外负担不容忽视。比起递归算法，迭代算法更能有效地执行。 
+		    此外，因为在每次递归调用时都会消耗栈，所以还有栈溢出的可能。
+
+      标记-整理算法:
+	    标记/整理算法与标记/清除算法非常相似，它也是分为两个阶段：标记和整理。下面LZ给各位介绍一下这两个阶段都做了什么。
+                  标记：它的第一个阶段与标记/清除算法是一模一样的，均是遍历GC Roots，然后将存活的对象标记。
+                  整理：移动所有存活的对象，且按照内存地址次序依次排列，然后将末端内存地址以后的内存全部回收。因此，第二阶段才称为整理阶段。
+            
+
+       整体总结:
+	        1、三个算法都基于根搜索算法去判断一个对象是否应该被回收，而支撑根搜索算法可以正常工作的理论依据，就是语法中变量作用域的相关内容。
+		     因此，要想防止内存泄露，最根本的办法就是掌握好变量作用域，而不应该使用前面内存管理杂谈一章中所提到的C/C++式内存管理方式。
+
+                2、在GC线程开启时，或者说GC过程开始时，它们都要暂停应用程序（stop the world）。
+
+                它们的区别LZ按照下面几点来给各位展示。（>表示前者要优于后者，=表示两者效果一样）
+                   效率：复制算法>标记/整理算法>标记/清除算法（此处的效率只是简单的对比时间复杂度，实际情况不一定如此）。
+                   内存整齐度：复制算法=标记/整理算法>标记/清除算法。
+                   内存利用率：标记/整理算法=标记/清除算法>复制算法。
+
+		    https://blog.csdn.net/Java_Grass/article/details/62886965  内存模型!
+	    
+10:你在项目中使用了哪种架构，怎么使用的?
+      
+
+11:Android中的性能优化有哪些方面?你在项目中遇到了哪些，怎么解决的？
+    https://www.jianshu.com/p/4d6c38e1f5b8 优化
+
+   1.布局优化：
+      ①删除布局中无用的控件和层次，其次有选择地使用性能比较低的ViewGroup。
+ 
+        关于有选择地使用性能比较低的ViewGroup,这就需要我们开发就实际灵活选择了。
+         例如：如果布局中既可以使用LinearLayout也可以使用RelativeLayout，那么就采用LinearLayout，这是因为RelativeLayout的功能比较复杂，
+	           它的布局过程需要花费更多的CPU时间。FrameLayout和LinearLayout一样都是一种简单高效的ViewGroup，因此可以考虑使用它们，
+		    但是很多时候单纯通过一个LinearLayout或者FrameLayout无法实现产品效果，需要通过嵌套的方式来完成。 
+		     这种情况下还是建议采用RelativeLayout,因为ViewGroup的嵌套就相当于增加了布局的层级，同样会降低程序的性能。
+
+        ②采用<include>标签,<merge>标签,ViewStub。
+		 <include>标签主要用于布局重用。
+		 <merge>标签一般和<include>配合使用，可以降低减少布局的层级。
+		 ViewStub提供了按需加载的功能，当需要时才会将ViewStub中的布局加载到内存，提高了程序初始化效率。
+
+         关于它们的使用方法，参考：Android布局优化之include、merge、ViewStub的使用
+
+   布局优化:
+             关于布局优化的思想很简单，就是尽量减少布局文件的层级。这个道理很浅显，布局中的层级少了，就意味着Android绘制时的工作量少了，那么程序的性能自然就提高了。
+
+             ①删除布局中无用的控件和层次，其次有选择地使用性能比较低的ViewGroup。
+             ②采用<include>标签,<merge>标签,ViewStub。
+	     ③避免多度绘制
+
+               https://jaeger.itscoder.com/android/2016/09/29/android-performance-overdraw.html  过度
+
+
+   2.绘制优化
+        ①onDraw中不要创建新的局部对象。
+
+        ②onDraw方法中不要做耗时的任务，也不能执行成千上万次的循环操作，尽管每次循环都很轻量级，
+	  但是大量的循环仍然十分抢占CPU的时间片，这会造成View的绘制过程不流畅。
+
+
+   3.内存泄漏优化
+
+        ①在开发过程中避免写出有内存泄漏的代码
+
+        ②通过一些分析工具比如MAT来找出潜在的内存泄露，然后解决。
+
+           引用计数法直接计数，简单高效，Python便是采用该方法。但是如果出现 两个对象相互引用，
+	即使它们都无法被外界访问到，计数器不为0它们也始终不会被回收。为了解决该问题，java采用的是b方法。
+
+           可达性分析法这个方法设置了一系列的“GC Roots”对象作为索引起点，如果一个对象 与起点对象之间均无可达路径，那么这个不可达的对象就会成为回收对象。
+	这种方法处理 两个对象相互引用的问题，如果两个对象均没有外部引用，会被判断为不可达对象进而被回收（如下图）。
+
+
+           2.Android一般在什么情况下会出现内存泄漏？
+		①集合类泄漏
+		②单例/静态变量造成的内存泄漏
+		③匿名内部类/非静态内部类
+		④资源未关闭造成的内存泄漏
+
+                大概可以分为以上几类，还有一些经常会听到的Hanlder,AsyncTask引起内存泄漏，都属于上述③中的情况。
+
+
+         
+   4.响应速度优化
+
+       响应速度优化的核心思想就是避免在主线程中做耗时操作。
+
+       如果有耗时操作，可以开启子线程执行，即采用异步的方式来执行耗时操作。
+
+       如果在主线程中做太多事情，会导致Activity启动时出现黑屏现象，甚至ANR。
+
+
+           Android规定，Activity如果5秒钟之内无法响应屏幕触摸事件或者键盘输入事件就会出现ANR，而BroadcastReceiver如果10秒钟之内还未执行完操作也会出现ANR。
+        为了避免ANR，可以开启子线程执行耗时操作，但是子线程不能更新UI，所以需要子线程与主线程进行通信来解决子线程执行耗时任务后，通知主线程更新UI的场景。关于这部分，
+	需要掌握Handler消息机制，AsyncTask，IntentService等内容。
+
+         可以看以下内容：
+            Android消息机制的原理及源码解析
+            Android中的线程状态之AsyncTask详解
+            Android多线程全面解析：IntentService用法&源码
+
+               然而，在实际开发中，ANR仍然不可避免的发生了，而且很难从代码上发现，这时候就要用到ANR日志分析。当一个进程发生了ANR之后，
+	    系统会在/data/anr目录下创建一个文件traces.txt，通过分析这个文件就能定位出ANR的原因。
+      
+   5.ListView/RecycleView及Bitmap优化
+        ListView/RecycleView的优化思想主要从以下几个方面入手：
+        ①使用ViewHolder模式来提高效率
+        ②异步加载：耗时的操作放在异步线程中
+        ③ListView/RecycleView的滑动时停止加载和分页加载
+
+
+   6.线程优化
+       线程优化的思想就是采用线程池，避免程序中存在大量的Thread。线程池可以重用内部的线程，从而避免了线程的创建和销毁锁带来的性能开销，
+       同时线程池还能有效地控制线程池的最大并法术，避免大量的线程因互相抢占系统资源从而导致阻塞现象的发生。因此在实际开发中，尽量采用线程池，而不是每次都要创建一个Thread对象。
+
+
+
+   7.其他性能优化的建议
+      ①避免过度的创建对象
+      ②不要过度使用枚举，枚举占用的内存空间要比整型大
+      ③常量请使用static final来修饰
+      ④使用一些Android特有的数据结构，比如SparseArray和Pair等
+      ⑤适当采用软引用和弱引用
+      ⑥采用内存缓存和磁盘缓存
+      ⑦尽量采用静态内部类，这样可以避免潜在的由于内部类而导致的内存泄漏。
+
+
+
+   https://www.jianshu.com/p/4d6c38e1f5b8
+
+12:java中如何读取 input.txt中内容，并写入到output.txt中，写出核心代码?
+
+
+
+13:NDK的编写流程:
+
+   1.导入库文件libjpegbither.so
+   2.导入头文件
+   3.写mk文件
+      Android.mk
+      Applicatoin.mk
+   4.写代码
+      C++: XX.cpp
+      C:   XX.c
+
+
+
+以后尽量使用 jni 编写封装一些 的算法的功能!
+
+
+
+
+14:java 的内存模型：
+    
+    https://blog.csdn.net/javazejian/article/details/72772461
+
+   

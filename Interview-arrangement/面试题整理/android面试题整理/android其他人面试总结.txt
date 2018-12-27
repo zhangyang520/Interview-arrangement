@@ -1,0 +1,129 @@
+android开发面试，没准备，裸面。当时朋友内推的，我还没确定要换工作，而且那段时间比较忙，就没准备。结果就挂了。
+
+一开始就是二叉树层序遍历，说思路，然后手写。
+   二叉树的内部的实体:
+      element
+      right
+      left
+
+     实体构造:
+     class BinaryNode<T> @JvmOverloads
+             constructor(internal var element: T,
+                                internal var left: BinaryNode<T>? = null,
+                                      internal var right: BinaryNode<T>? = null) {
+
+        override fun toString(): String {
+            return element.toString()
+        }
+    }
+
+    外部的实体需要一个 root的根节点:
+        var root:BinaryNode<T>?=null
+
+   
+    二叉树的生成:(并不是 平衡二叉树)
+      insert 插入:
+        主要是通过递归，以及新插入的节点 
+	 if (root == null)
+            return  BinaryNode<T>(ele);
+        var compareResult = ele.compareTo(root.element);
+        if (compareResult > 0){
+            /**
+             * 思想:
+             *     判断 右边的节点有无
+             *        如果有: 比较当前插入的节点 与 右结点 比较
+             *                 如果小于右节点：将当前节点替换为 插入节点，当前节点变换为 新节点的左可节点
+             *        如果没有:
+             *              直接插入右节点
+             *           
+             */
+            root.right = insert(ele, root.right);
+            root!!.right!!.pre=root
+        }else if (compareResult < 0){
+            root.left = insert(ele, root.left);
+            root!!.left!!.pre=root
+        }
+        else;
+        return root;
+
+
+     查询:
+         找出 最大值:
+	     /*
+	      * 关于尾递归的返回值,该方法只会返回二个值: 
+	      *           null 和 'root' root 是最后一层递归调用时findMax的 root 参数
+	      */
+	    private fun  findMax(root:BinaryNode<T>): BinaryNode<T>?{
+		if (root == null)
+		    return null;
+		if (root.right == null)
+		    return root;
+		else
+		    return findMax(root.right!!);
+	    }
+       
+          
+	   找出最小值:
+	          /**
+		     * 找出最小的元素
+		     */
+		    private fun findMin(root:BinaryNode<T>): BinaryNode<T>?{
+			if (root == null)
+			    return null;
+			if (root.left == null)
+			    return root;
+			else
+			    return findMin(root.left!!);
+		    }
+	       
+     遍历:
+         
+            /**
+	     * 中间 左边 和右边  打印出信息
+	     */
+	    public fun preOrder(root:BinaryNode<T>?) {
+		if (root == null)
+		    return;
+		println("preOrder:"+root.element);
+		preOrder(root.left);
+		preOrder(root.right);
+	    }
+
+        
+	  /**
+	     *  先左边  中间  右边 打印信息! 
+	     */
+	    public fun inOrder(root:BinaryNode<T>?) {
+		if (root == null)
+		    return;
+		inOrder(root.left);
+		println("inOrder:"+root.element);
+		inOrder(root.right);
+	    }
+
+
+           返回树节点的高度:
+          /**
+	     * 返回树的高度
+	     *  树的层级 根节点不算!
+	     */
+	    private fun height(root:BinaryNode<T>?):Int{
+		if (root == null)
+		    return -1;// 叶子节点的高度为0,空树的高度为1
+
+		return 1 +  Math.max(height(root.left), height(root.right));
+	    }
+
+
+然后就是Java基础数据结构，Set的实现原理，底层是什么？
+
+      HashSet: 无序 不重复 散列表
+      TreeSet: 有序,不重复  红黑二叉树
+ 
+Map的底层数据结构，怎么实现的，
+Java1.8中有什么不同等。
+
+数据结果一定要搞清楚。还有同步加锁，底层是怎么回事。
+
+然后就是Android 基础，自定义View，View的响应事件流程，手画出来。
+还有网络相关，图片加载相关库的知识。最后就是问下自己的打算。
