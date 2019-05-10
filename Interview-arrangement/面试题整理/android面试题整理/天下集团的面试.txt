@@ -1,0 +1,902 @@
+1：什么情况会导致Force Close ？如何避免？能否捕获导致其的异常？
+   抛出运行时异常时就会导致Force Close，比如空指针、数组越界、类型转换异常等等。
+   捕获：可以通过logcat查看抛出异常的代码出现的位置，然后到程序对应代码中进行修改。
+   避免：编写程序时，要思维缜密，在可能出现异常的地方都作相应的处理，增强程序的健壮性。
+   
+
+2:android 中有哪几种解析xml的类
+  DOM解析
+    优点:
+     1.XML树在内存中完整存储,因此可以直接修改其数据和结构.
+     2.可以通过该解析器随时访问XML树中的任何一个节点.
+     3.DOM解析器的API在使用上也相对比较简单.
+        缺点:如果XML文档体积比较大时,将文档读入内存是非常消耗系统资源的.
+        使用场景:DOM 是用与平台和语言无关的方式表示 XML 文档的官方 W3C 标准.DOM 是以层次结构组织的节点的集合.这个层次结构允许开发人员在树中寻找特定信息.分析该结构通常需要加载整个文档和构造层次结构,然后才能进行任何工作.DOM是基于对象层次结构的.
+   SAX解析
+     优点:
+      SAX 对内存的要求比较低,因为它让开发人员自己来决定所要处理的标签.特别是当开发人员只需要处理文档中所包含的部分数据时,SAX 这种扩展能力得到了更好的体现.
+     缺点:
+      用SAX方式进行XML解析时,需要顺序执行,所以很难访问到同一文档中的不同数据.此外,在基于该方式的解析编码过程也相对复杂.
+    使用场景:
+      对于含有数据量十分巨大,而又不用对文档的所有数据进行遍历或者分析的时候,使用该方法十分有效.该方法不用将整个文档读入内存,而只需读取到程序所需的文档标签处即可.
+	  
+    Xmlpull解析
+     android SDK提供了xmlpull api,xmlpull和sax类似,是基于流（stream）操作文件,然后根据节点事件回调开发者编写的处理程序.
+	 因为是基于流的处理,因此xmlpull和sax都比较节约内存资源,不会象dom那样要把所有节点以对橡树的形式展现在内存中.xmlpull比sax更简明,而且不需要扫描完整个流.
+	 
+
+3: activity的启动模式有哪些？是什么含义？
+   standard、singleTop、singleTask、singleInstance	 
+	 
+   standard: 	 
+     这个模式是默认的启动模式，即标准模式，在不指定启动模式的前提下，系统默认使用该模式启动Activity，
+   每次启动一个Activity都会重写创建一个新的实例，不管这个实例存不存在，这种模式下，谁启动了该模式的Activity，该Activity就属于启动它的Activity的任务栈中。
+   
+   singleTop模式
+     这个模式下，如果新的activity已经位于栈顶，那么这个Activity不会被重新创建，同时它的onNewIntent方法会被调用，
+	 通过此方法的参数我们可以去除当前请求的信息。如果栈顶不存在该Activity的实例，则情况与standard模式相同。
+	 需要注意的是这个Activity它的onCreate()，onStart()方法不会被调用，因为它并没有发生改变。
+	 
+   singleTop模式分3种情况
+     1）当前栈中已有该Activity的实例并且该实例位于栈顶时，不会新建实例，而是复用栈顶的实例，并且会将Intent对象传入，回调onNewIntent方法
+     2）当前栈中已有该Activity的实例但是该实例不在栈顶时，其行为和standard启动模式一样，依然会创建一个新的实例
+     3）当前栈中不存在该Activity的实例时，其行为同standard启动模式standard和singleTop启动模式都是在原任务栈中新建Activity实例，不会启动新的Task
+ 
+
+   singleTask模式
+    在这个模式下，如果栈中存在这个Activity的实例就会复用这个Activity，不管它是否位于栈顶，复用时，
+	会将它上面的Activity全部出栈，并且会回调该实例的onNewIntent方法。
+	
+   singleInstance-全局唯一模式
+     该模式具备singleTask模式的所有特性外，与它的区别就是，这种模式下的Activity会单独占用一个Task栈，
+	 具有全局唯一性，即整个系统中就这么一个实例，由于栈内复用的特性，后续的请求均不会创建新的Activity实例，除非这个特殊的任务栈被销毁了。以singleInstance模式启动的Activity在整个系统中是单例的，如果在启动这样的Activiyt时，已经存在了一个实例，那么会把它所在的任务调度到前台，重用这个实例。
+
+
+4：什么是 ANR 如何避免它？
+
+   在 Android 上，如果你的应用程序有一段时间响应不够灵敏，系统会向用户显示一个对话框，这个对话框称作应
+   用程序无响应（ANR：Application Not Responding）对话框。用户可以选择让程序继续运行，但是，他们在使用你
+    的应用程序时，并不希望每次都要处理这个对话框。因此，在程序里对响应性能的设计很重要，这样，系统不会显示
+   ANR 给用户。
+    不同的组件发生 ANR 的时间不一样，主线程（Activity、Service）是 5 秒，BroadCastReceiver 是 10 秒。
+	
+  解决方案：
+    将所有耗时操作，比如访问网络，Socket 通信，查询大量 SQL 语句，复杂逻辑计算等都放在子线程中去，然后
+    通过 handler.sendMessage、runonUITread、AsyncTask 等方式更新 UI。无论如何都要确保用户界面操作的流畅度。
+	如果耗时操作需要让用户等待，那么可以在界面上显示进度条。
+
+
+5: 如果后台的Activity由于某原因被系统回收了，如何在被系统回收之前保存当前状态？
+  
+       当你的程序中某一个Activity A在运行时，主动或被动地运行另一个新的Activity B，这个时候A会执行onSaveInstanceState()来保存Activity的当前状态 。B完成以后又会来找A，
+    这个时候就有两种情况：一是A被回收，二是A没有被回收，被回收的A就要重新调用onCreate()方法，不同于直接启动的是这回onCreate()里是带上了参数savedInstanceState；而没被收回的就直接执行onResume()，跳过onCreate()了。
+
+       当一个Activity被pause或者stop的时候,这个Activity的对象实际上还是保存在内存中,因此这个Activity中的信息(成员和状态信息)还可以重新获取到. 
+    如果系统为了整理内存而销毁了整个Activity对象时,系统没法简单的原封不动地恢复先前的Activity对象及其状态信息. 
+    从android手册上来看,Activity中提供了一个方法:onSavedInstanceState(Bundle obj).当系统销毁一个Activity时,会将Activity的状态信息已键值对形式存放在bundle对象中. 
+    第一次启动Activity时,这个bundle对象是空的,null.如果Activity被系统销毁了,然后用户要回退回去看的话,系统会调用这个Activity的onCreate方法,并把bundle对象传递过去. 
+    这个函数有默认的行为,因此就算你不覆盖它,它在Activity中也有实现.
+	
+	
+6：Android程序运行时权限与文件系统权限的区别
+  	要区分apk运行时的拥有的权限与在文件系统上被访问（读写执行）的权限两个概念。 apk程序是运行在虚拟机上的,对应的是Android独特的权限机制，
+	只有体现到文件系统上时才使用linux的权限设置。
+	（一）linux文件系统上的权限 -rwxr-x--x system system 4156 2010-04-30 16:13 test.apk代表的是相应的用户/用户组及其他人对此文件的访问权限，
+	与此文件运行起来具有的权限完全不相关。 比如上面的例子只能说明system用户拥有对此文件的读写执行权限；
+	system组的用户对此文件拥有读、执行权限；其他人对此文件只具有执行权限。 
+	而test.apk运行起来后可以干哪些事情，跟这个就不相关了。 千万不要看apk文件系统上属于system/system用户及用户组，
+	或者root/root用户及用户组，就认为apk具有system或root权限
+	（二）Android的权限规则 （1)Android中的apk必须签名 这种签名不是基于权威证书的，不会决定某个应用允不允许安装，而是一种自签名证书。
+	重要的是，android系统有的权限是基于签名的。比如：system等级的权限有专门对应的签名，签名不对，权限也就获取不到。
+	
+	
+	（2）基于UserID的进程级别的安全机制
+		大家都知道，进程有独立的地址空间，进程与进程间默认是不能互相访问的，是一种很可靠的保护机制。
+		Android通过为每一个安装在设备上的包（apk）分配唯一的linux userID来实现，名称为"app_"加一个数字，比如app_43
+		不同的UserID，运行在不同的进程，所以apk之间默认便不能相互访问。
+
+		Android提供了如下的一种机制，可以使两个apk打破前面讲的这种壁垒。
+		在AndroidManifest.xml中利用sharedUserId属性给不同的package分配相同的userID，通过这样做，两个package可以被当做同一个程序，
+		系统会分配给两个程序相同的UserID。当然，基于安全考虑，两个package需要有相同的签名，否则没有验证也就没有意义了。
+
+		（这里补充一点:并不是说分配了同样的UserID，两程序就运行在同一进程, 下面为PS指令摘取的，
+		显然，system、app_2分别对应的两个进程的PID都不同，不知Android到底是怎样实现它的机制的）
+
+		User PID PPID
+		system 953 883 187340 55052 ffffffff afe0cbcc S system_server
+		app_2 1072 883 100264 19564 ffffffff afe0dcc4 S com.android.inputmethod.
+		system 1083 883 111808 23192 ffffffff afe0dcc4 S android.process.omsservi
+		app_2 1088 883 156464 45720 ffffffff afe0dcc4 S android.process.acore
+
+	（3）默认apk生成的数据对外是不可见的
+		实现方法是：Android会为程序存储的数据分配该程序的UserID。
+		借助于Linux严格的文件系统访问权限，便实现了apk之间不能相互访问似有数据的机制。
+		例：我的应用创建的一个文件，默认权限如下，可以看到只有UserID为app_21的程序才能读写该文件。
+		-rw------- app_21 app_21 87650 2000-01-01 09:48 test.txt
+
+		如何对外开放？
+		<1> 使用MODE_WORLD_READABLE and/or MODE_WORLD_WRITEABLE 标记。
+		When creating a new file with getSharedPreferences(String, int), openFileOutput(String, int), or openOrCreateDatabase(String, int, SQLiteDatabase.CursorFactory), you can use the MODE_WORLD_READABLE and/or MODE_WORLD_WRITEABLE flags to allow any other package to read/write the file. When setting these flags, the file is still owned by your application, but its global read and/or write permissions have been set appropriately so any other application can see it.
+
+
+	（4）AndroidManifest.xml中的显式权限声明
+		Android默认应用是没有任何权限去操作其他应用或系统相关特性的，应用在进行某些操作时都需要显式地去申请相应的权限。
+		一般以下动作时都需要申请相应的权限：
+
+		A particular permission may be enforced at a number of places during your program's operation:
+
+		At the time of a call into the system, to prevent an application from executing certain functions.
+		When starting an activity, to prevent applications from launching activities of other applications.
+		Both sending and receiving broadcasts, to control who can receive your broadcast or who can send a broadcast to you.
+		When accessing and operating on a content provider.
+		Binding or starting a service.
+
+		在应用安装的时候，package installer会检测该应用请求的权限，根据该应用的签名或者提示用户来分配相应的权限。
+		在程序运行期间是不检测权限的。如果安装时权限获取失败，那执行就会出错，不会提示用户权限不够。
+		大多数情况下，权限不足导致的失败会引发一个 SecurityException， 会在系统log（system log）中有相关记录。
+
+	（5）权限继承/UserID继承
+		当我们遇到apk权限不足时，我们有时会考虑写一个linux程序，然后由apk调用它去完成某个它没有权限完成的事情，很遗憾，这种方法是行不通的。
+		前面讲过，android权限是经营在进程层面的，也就是说一个apk应用启动的子进程的权限不可能超越其父进程的权限（即apk的权限），
+		即使单独运行某个应用有权限做某事，但如果它是由一个apk调用的，那权限就会被限制。
+		实际上，android是通过给子进程分配父进程的UserID实现这一机制的。
+
+（三）常见权限不足问题分析
+
+	首先要知道，普通apk程序是运行在非root、非system层级的，也就是说看要访问的文件的权限时，看的是最后三位。
+	另外，通过system/app安装的apk的权限一般比直接安装或adb install安装的apk的权限要高一些。
+
+	言归正传，运行一个android应用程序过程中遇到权限不足，一般分为两种情况:
+	（1）Log中可明显看到权限不足的提示。
+	此种情况一般是AndroidManifest.xml中缺少相应的权限设置，好好查找一番权限列表，应该就可解决，是最易处理的情况。
+
+	有时权限都加上了，但还是报权限不足，是什么情况呢？
+	Android系统有一些API及权限是需要apk具有一定的等级才能运行的。
+	比如 SystemClock.setCurrentTimeMillis()修改系统时间，WRITE_SECURE_SETTINGS权限 好像都是需要有system级的权限才行。
+	也就是说UserID是system.
+
+	（2）Log里没有报权限不足，而是一些其他Exception的提示,这也有可能是权限不足造成的。
+	比如：我们常会想读/写一个配置文件或其他一些不是自己创建的文件，常会报java.io.FileNotFoundException错误。
+	系统认为比较重要的文件一般权限设置的也会比较严格，特别是一些很重要的(配置)文件或目录。
+	如
+	-r--r----- bluetooth bluetooth 935 2010-07-09 20:21 dbus.conf
+	drwxrwx--x system system 2010-07-07 02:05 data
+
+	dbus.conf好像是蓝牙的配置文件，从权限上来看，根本就不可能改动，非bluetooth用户连读的权利都没有。
+
+	/data目录下存的是所有程序的私有数据，默认情况下android是不允许普通apk访问/data目录下内容的，通过data目录的权限设置可知，其他用户没有读的权限。
+	所以adb普通权限下在data目录下敲ls命令，会得到opendir failed, Permission denied的错误，通过代码file.listfiles()也无法获得data目录下的内容。
+
+
+	上面两种情况，一般都需要提升apk的权限，目前我所知的apk能提升到的权限就是system（具体方法见：如何使Android应用程序获取系统权限）,
+	至于是否有root级的，如何提升至root级不得而知，知道的朋友劳烦告知，感激不尽。
+	
+	
+	
+（7）如何将SQLite数据库（dictionary.db文件）与apk文件一起发布
+	可以将dictionary.db文件复制到Eclipse Android工程中的res\raw目录中。
+
+	所有在res\raw目录中的文件不会被压缩，这样可以直接提取该目录中的文件。
+
+	使用openDatabase方法来打开数据库文件，
+	如果该文件不存在，系统会自动创建/sdcard/dictionary目录，
+	并将res\raw目录中的 dictionary.db文件复制到/sdcard/dictionary目录中。
+	
+	
+  代码 
+    private SQLiteDatabase openDatabase()
+    {
+        try
+        {
+            // 获得dictionary.db文件的绝对路径
+            String databaseFilename = DATABASE_PATH + "/" + DATABASE_FILENAME;
+            File dir = new File(DATABASE_PATH);
+            // 如果/sdcard/dictionary目录中存在，创建这个目录
+            if (!dir.exists())
+                dir.mkdir();
+            // 如果在/sdcard/dictionary目录中不存在
+            // dictionary.db文件，则从res\raw目录中复制这个文件到
+            // SD卡的目录（/sdcard/dictionary）
+            if (!(new File(databaseFilename)).exists())
+            {
+                // 获得封装dictionary.db文件的InputStream对象
+                InputStream is = getResources().openRawResource(R.raw.dictionary);
+                FileOutputStream fos = new FileOutputStream(databaseFilename);
+                byte[] buffer = new byte[8192];
+                int count = 0;
+                // 开始复制dictionary.db文件
+                while ((count = is.read(buffer)) > 0)
+                {
+                    fos.write(buffer, 0, count);
+                }
+
+                fos.close();
+                is.close();
+            }
+            // 打开/sdcard/dictionary目录中的dictionary.db文件
+            SQLiteDatabase database = SQLiteDatabase.openOrCreateDatabase(
+                    databaseFilename, null);
+            return database;
+        }
+        catch (Exception e)
+        {
+        }
+        return null;
+    }
+
+
+
+
+
+    在openDatabase方法中使用了几个常量，这些常量是在程序的主类（Main）中定义的，代码如下：
+
+
+
+	代码 
+	public class Main extends Activity implements OnClickListener, TextWatcher
+	{
+		private final String DATABASE_PATH = android.os.Environment
+				.getExternalStorageDirectory().getAbsolutePath()
+				+ "/dictionary";
+		private final String DATABASE_FILENAME = "dictionary.db";
+	}
+	
+	
+	
+(8):如何将打开res/raw目录中的数据库文件?	
+	在Android中不能直接打开res /raw目录中的数据库文件，而需要在程序第一次启动时将该文件复制到手机内存或SD卡的某个目录中，
+    然后再打开该数据库文件。
+    复制的基本方法是使用getResources().openRawResource方法获得res/raw目录中资源的 InputStream对象，
+    然后将该InputStream对象中的数据写入其他的目录中相应文件中。
+    在Android SDK中可以使用SQLiteDatabase.openOrCreateDatabase方法来打开任意目录中的SQLite数据库文件。
+
+
+		实现如下：copyDB()；
+		private void copyDB() {
+				//只要你拷贝了一次，我就不要你再拷贝了
+				try {
+					File file = new File(getFilesDir(), "address.db");
+					if(file.exists()&&file.length()>0){
+						//正常了，就不需要拷贝了
+						Log.i("copyDB", "正常了，就不需要拷贝了");
+					}else{
+						//().openRawResource
+						//InputStream is = getAssets().open("address.db");
+						InputStream is = getResources().openRawResource(R.raw.address);
+						FileOutputStream fos = new FileOutputStream(file);
+						byte[] buffer = new byte[1024];
+						int len = 0;
+						while((len = is.read(buffer))!= -1){
+							fos.write(buffer, 0, len);
+						}
+						is.close();
+						fos.close();
+					}
+					 
+					 
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		 
+
+		打开数据库：
+
+
+		public static String path = "data/data/com.itheima.mobilesafe/files/address.db";
+		 
+		public static String SearchNumber(String number){
+			String adrress = number;
+			SQLiteDatabase openDatabase = SQLiteDatabase.openDatabase(path, null, SQLiteDatabase.OPEN_READONLY);
+			Cursor cursor = openDatabase.rawQuery("select location from data2 where id=(select outkey  from data1 where id=?)",
+					new String[]{number.substring(0,7)});
+			while(cursor.moveToNext()){
+					String location = cursor.getString(0);
+					 adrress = location ;
+			}
+			return adrress;
+		}
+		
+ (9)handler机制
+ (10)请解释下在单线程模型中Message、Handler、Message Queue、Looper之间的关系。
+ (11)屏幕适配
+ 
+ (12)Devik 进程，linux 进程，线程的区别：
+    Dalvik 虚拟机运行在 Linux 操作系统之上。Linux 操作系统并没有纯粹的线程概念，只要两个进程共享一个地址空间，
+	 那么就可以认为它们是同一个进程的两个线程。Linux 系统提供了两个 fork 和clone 调用，其中，前者是用来创建进程的，而后者是用来创建线程的。 
+     一般来说， 虚拟机的进程和线程都是和目标机器本地操作系统的进程和线程一一对应的，这样的好处是可以使本地操作系统来调度进程和线程。 
+	 
+     每个 Android 应用程序进程都有一个 Dalvik 虚拟机实例。这样做得好处是 Android 应用程序进程之间不会互相影响，也就是说，
+	   一个 Android 应用程序进程的意外终止，不会影响到其他的应用程序进程的正常运行。 
+     每个 Android 应用程序进程都是由一种称为 Zygote 的进程 fork 出来的。Zygote 进程是由init 进程启动起来的，
+	 也就是在系统启动的时候启动的。Zygnote 进程在启动的时候，会创建一个虚拟机实例，并且在这个虚拟机实例将所有的 Java 核心库都加载起来。
+	 每当 Zygote 进程需要创建一个 Android 应用程序进程的时候，它就通过复制自身来实现，也就是通过 fork 系统调用来实现。
+	 这些被 fork 出来的 Android 应用程序进程，一方面是复制了 Zygote 进程中的虚拟机实例，另外一方面是与 Zygote 进程共享了同一套 Java 核心库。
+	 这样不仅 Android 程序进程的创建很快，而且所有的应用程序都共享同一套 Java 核心库而节省了内存空间。
+	 
+	 
+
+ (13)：Android中什么情况下会导致内存泄露
+    Android 的虚拟机是基于寄存器的Dalvik，它的最大堆大小一般是16M，有的机器为24M。因此我们所能利用的内存空间是有限的。
+	  如果我们的内存占用超过了一定的水平就会出现OutOfMemory 的错误。
+	  
+   内存溢出的几点原因：
+	1. 资源释放问题
+	   程序代码的问题，长期保持某些资源，如Context、Cursor、IO 流的引用，资源得不到释放造成内存泄露。
+	   
+    2. 对象内存过大问题
+       保存了多个耗用内存过大的对象（如Bitmap、XML 文件），造成内存超出限制。
+	 
+	3. static 关键字的使用问题
+
+		static 是Java 中的一个关键字，当用它来修饰成员变量时，那么该变量就属于该类，而不是该类的实例。所以用static 修饰的变量，
+		  它的生命周期是很长的，如果用它来引用一些资源耗费过多的实例（Context 的情况最多），这时就要谨慎对待了。
+		  
+		public class ClassName {
+			private static Context mContext;
+		//省略
+		}
+		以上的代码是很危险的，如果将Activity 赋值到mContext 的话。那么即使该Activity已经onDestroy，但是由于仍有对象保存它的引用，因此该Activity 依然不会被释放。
+		我们举Android 文档中的一个例子。
+
+		private static Drawable sBackground;
+		@Override
+		protected void onCreate(Bundle state) {
+			super.onCreate(state);
+			TextView label = new TextView(this); //getApplicationContext
+			label.setText("Leaks are bad");
+			if (sBackground == null) {
+				sBackground = getDrawable(R.drawable.large_bitmap);
+			}
+			label.setBackgroundDrawable(sBackground);
+			setContentView(label);
+		}
+		
+		sBackground 是一个静态的变量，但是我们发现，我们并没有显式的保存Contex的引用，但是，当Drawable 与View 连接之后，
+		Drawable 就将View 设置为一个回调，由于View 中是包含Context 的引用的，所以，实际上我们依然保存了Context的引用。这个引用链如下：
+		Drawable->TextView->Context
+		所以，最终该Context 也没有得到释放，发生了内存泄露。
+		虽然这个例子摘自安卓官方文档, 但这个文档是2009 年1 月的, 安卓版本还在3.0或者3.0 之前.
+		之所会出现内存泄露是因为在安卓3.0 之前View 的源码中是这样的:
+
+		public void setBackgroundDrawable(Drawable background) {
+			// ... ...
+			background.setCallback(this);
+			// ... ...
+			}
+		Drawable 中源码是这样的:
+		public final void setCallback(Callback cb) {
+			mCallback = cb;
+		}
+		
+		这个background 对象持有View 的引用, View 中又持有Activity 的引用,background 是static, 那么background 只有在虚拟机退出时才会被回收, 
+		它持有的引用才会被释放, 也就是这个View 才有可能被回收,这个Activity 才会被回收.当然,上面就是这么说的, 但是安卓3.0 之后这个问题被解决了
+		安卓3.0 之后源码中的Drawable 的setCallback 方法是这样:
+
+		public final void setCallback(Callback cb) {
+			mCallback = new WeakReference<Callback>(cb);
+		}
+		
+		Drawable 中保存的是View 的弱引用, 解决了内存泄露的问题.
+		针对static 的解决方案
+		1) 应该尽量避免static 成员变量引用资源耗费过多的实例，比如Context。
+		2) Context 尽量使用ApplicationContext，因为Application 的Context 的生命周期比较长， 引用它不会出现内存泄露的问题。
+		( 实际上是因为ApplicationContext 对象程序运行就会创建, 程序退出才销毁, 它有且仅有一个, 所以就算不用他也在那里, 不存在回收的问题.)
+		3) 使用WeakReference 代替强引用。比如可以使用WeakReference<Context> mContextRef;
+		(补充一点, getSystemService 方法请尽量使用ApplicationContext 去调用, 某些厂商修改了底层代码导致系统服务引用的Context 不能释放.)
+		
+		
+		
+		4. 线程导致内存溢出
+
+		public class MyActivity extends Activity {
+			@Override
+			public void onCreate(Bundle savedInstanceState) {
+				super.onCreate(savedInstanceState);
+				setContentView(R.layout.main);
+				new MyThread().start();
+			}
+			private class MyThread extends Thread{
+				@Override
+				public void run() {
+					super.run();
+					//do somthing while(true)
+				}
+			}
+		}
+      这段代码很平常也很简单，是我们经常使用的形式。我们思考一个问题：假设MyThread的run 函数是一个很费时的操作，
+	  当我们开启该线程后，将设备的横屏变为了竖屏，一般情况下当屏幕转换时会重新创建Activity，按照我们的想法，
+	  老的Activity 应该会被销毁才对，然而事实上并非如此。由于我们的线程是Activity 的内部类，
+	  所以MyThread 中保存了Activity 的一个引用，当MyThread 的run 函数没有结束时，MyThread 是不会被销毁的，
+	  因此它所引用的老的Activity 也不会被销毁，因此就出现了内存泄露的问题。
+      怎么解决? 篇幅太长, 贴一个orcale 的官方文档地址:
+	    http://docs.oracle.com/javase/1.5.0/docs/guide/misc/threadPrimitiveDeprecation.html
+		
+		
+	  有些人喜欢用Android 提供的AsyncTask，但事实上AsyncTask 的问题更加严重，Thread 只有在run 函数不结束时才出现这种内存泄露问题，然而AsyncTask 内部的实现机制是运用了ThreadPoolExcutor,该类产生的Thread 对象的生命周期是不确定的，是应用程序无法控制的，因此如果AsyncTask 作为Activity 的内部类，就更容易出现内存泄露的问题。
+      针对这种线程导致的内存泄露问题的解决方案：
+	（一） 将线程的内部类，改为静态内部类（因为非静态内部类拥有外部类对象的强引用，而静态类则不拥有）。
+	（二） 在线程内部采用弱引用保存Context 引用。
+
+
+     (针对AsyncTask 怎么解决?
+
+		AsyncTask 有cancle()方法, 终止任务. 但是, 这个方法是不一定成功的!
+		如果是由循环组成的耗时操作, 循环中判断isCancle(), 如果为true, break 掉循环. 在Activity 的onDestory 调用AsyncTask 的cancle()方法.
+		AsyncTask 适合短耗时的操作, 几秒钟, 如果长耗时, 请使用其它API, 比如Executor,ThreadPoolExecutor 和FutureTask 等)
+
+
+		补充一点: registerReciever 一定要调用unregisterReciever， 但是如果注册广播接收者不成功, 取消注册时将会抛出异常. 解决方法: 取消注册try...catch.
+
+		补充:
+
+		使用cursor 要关闭,
+		使用database 要关闭,
+		使用流要关闭,
+		使用Timer 必须calcel,
+		使用TimerTask 必须cancel,
+		注册内容观察者必须取消注册
+		内容观察者被添加到ContentQueryMap 后不用时delete 这个内容观察者
+		Handler 在activity 的onDestory 中removeMessageAndCallback(null)
+		
+		
+ 13:Android面试经典题——如何捕获（处理）未捕获的异常
+     
+     1.自定义一个UncaughtExceptionHandler
+
+		public class CrashHandler implements Thread.UncaughtExceptionHandler {
+			private static final String TAG = "NoCrashHandler";
+			private static CrashHandler sCrashHandler;
+			private static Context sContext;
+
+			public static CrashHandler getInstance() {
+				if (sCrashHandler == null) {
+					synchronized (CrashHandler.class) {
+						if (sCrashHandler == null) {
+							sCrashHandler = new CrashHandler();
+						}
+					}
+				}
+				return sCrashHandler;
+			}
+
+
+			public void init(Context context) {  //初始化，把当前对象设置成UncaughtExceptionHandler处理器
+				sContext = context;
+				Thread.setDefaultUncaughtExceptionHandler(this);
+			}
+
+			/**
+			 * 有未处理的异常时
+			 *
+			 * @param thread
+			 * @param e
+			 */
+			@Override
+			public void uncaughtException(Thread thread, Throwable e) {
+				 Log.e(TAG, "uncaughtException, " + " 报错线程: " + thread.getName() + 
+				 " 线程id: " + thread.getId() + ",exception信息: "
+						+ e);
+				String threadName = thread.getName();
+				if ("UIThread".equals(threadName)) {
+					Log.e(TAG, "根据Thread，可以保存异常信息");
+				}
+			}
+
+
+      2.自定义一个Application,初始化 CrashHandler
+
+		// 别忘记在AndroidManifest 指定application name属性
+		public class MyApplication extends Application {
+			@Override
+			public void onCreate() {
+				super.onCreate();
+				CrashHandler.getInstance().init(getApplicationContext());
+			}
+		}
+
+
+   14：Android 线程间通信有哪几种方式
+     共享内存（变量）；文件，数据库；Handler；Java 里的 wait()，notify()，notifyAll()
+	 
+	 Android 进程间通信的几种实现方式:
+	    由于应用程序之间不能共享内存。在不同应用程序之间交互数据（跨进程通讯），在android SDK中提供了4种用于跨进程通讯的方式。
+	   这4种方式正好对应于android系统中4种应用程序组件：Activity、Content Provider、Broadcast和Service。
+	   
+	   其中Activity可以跨进程调用其他应用程序的Activity；Content Provider可以跨进程访问其他应用程序中的数据（以Cursor对象形式返回），
+	   当然，也可以对其他应用程序的数据进行增、删、改操 作；
+	   
+	   Broadcast可以向android系统中所有应用程序发送广播，而需要跨进程通讯的应用程序可以监听这些广播；
+	   
+	   Service和Content Provider类似，也可以访问其他应用程序中的数据，但不同的是，Content Provider返回的是Cursor对象，而Service返回的是Java对象
+	   ，这种可以跨进程通讯的服务叫AIDL服务。
+
+
+      Activity
+         Activity的跨进程访问与进程内访问略有不同。虽然它们都需要Intent对象，但跨进程访问并不需要指定Context对象和Activity的 Class对象，
+         而需要指定的是要访问的Activity所对应的Action（一个字符串）。有些Activity还需要指定一个Uri（通过 Intent构造方法的第2个参数指定）。
+		 
+	  Content Provider 
+
+        Android应用程序可以使用文件或SqlLite数据库来存储数据。Content Provider提供了一种在多个应用程序之间数据共享的方式（跨进程共享数据）。
+        应用程序可以利用Content Provider完成下面的工作
+
+		1. 查询数据
+		2. 修改数据
+		3. 添加数据
+		4. 删除数据
+
+        虽然Content Provider也可以在同一个应用程序中被访问，但这么做并没有什么意义。Content Provider存在的目的向其他应用程序共享数据和允许其他应用程序对数据进行增、删、改操作。
+      Android系统本身提供了很多Content Provider，例如，音频、视频、联系人信息等等。我们可以通过这些Content Provider获得相关信息的列表。这些列表数据将以Cursor对象返回。因此，从Content Provider返回的数据是二维表的形式。
+
+     广播（Broadcast） 
+      广播是一种被动跨进程通讯的方式。当某个程序向系统发送广播时，其他的应用程序只能被动地接收广播数据。这就象电台进行广播一样，听众只能被动地收听，而不能主动与电台进行沟通。
+     在应用程序中发送广播比较简单。只需要调用sendBroadcast方法即可。该方法需要一个Intent对象。通过Intent对象可以发送需要广播的数据。
+
+
+     Service：
+       1.利用AIDL Service实现跨进程通信
+
+        这是我个人比较推崇的方式，因为它相比Broadcast而言，虽然实现上稍微麻烦了一点，但是它的优势就是不会像广播那样在手机中的广播较多时会有明显的时延，
+          甚至有广播发送不成功的情况出现。 
+        注意普通的Service并不能实现跨进程操作，实际上普通的Service和它所在的应用处于同一个进程中，而且它也不会专门开一条新的线程，
+          因此如果在普通的Service中实现在耗时的任务，需要新开线程。
+
+        要实现跨进程通信，需要借助AIDL(Android Interface Definition Language)。Android中的跨进程服务其实是采用C/S的架构，因而AIDL的目的就是实现通信接口。
+
+
+   15:事件分发机制
+      https://www.cnblogs.com/linjzong/p/4191891.html
+	  
+   16：你在项目中有哪些常用或者遇到过的设计模式，举几个例子，并说说特点。	  
+       答：常用的设计模式有建造者模式、单例模式、工厂模式、原型模式、适配器模式。
+       若想详细了解参考这里 http://blog.csdn.net/ruizhenggang/article/details/78837183
+	   
+	
+   17:Android的自定义View及View的绘制流程
+         目标：实现Android中的自定义View，为理清楚Android中的View绘制流程“铺路”。
+         想法很简单：从一个简单例子着手开始编写自定义View，对ViewGroup、View类中与绘制View相关的方法解析，并最终弄清楚View的绘制流程。
+         View类代表用户界面组件的基本构建块；View在屏幕上占据一个矩形区域，并负责绘制和事件处理；View是用于创建交互式用户界面组件（按钮、文本等）的基础类。
+         ViewGroup是View的子类，是所有布局的父类，是一个可以包含其他View或者ViewGroup并定义它们的布局属性一个看不见的容器。
+		 
+		实现一个自定义View，通常会覆写一些Framework层上在所有View上调用的标准方法。
+		View在Activity中显示出来，要经历测量、布局和绘制三个步骤，分别对应三个动作：measure、layout和draw。
+		测量：onMeasure()决定View的大小；
+		布局：onLayout()决定View在ViewGroup中的位置；
+		绘制：onDraw()决定绘制这个View。
+		自定义View的步骤：
+		1.自定义View的属性；
+		2. 在View的构造方法中获得自定义的属性；
+		3. 重写onMeasure()； --> 并不是必须的，大部分的时候还需要覆写
+		4. 重写onDraw()；
+		
+		<?xml version="1.0" encoding="utf-8"?>
+		<resources>
+			<!-- 定义字体、字体颜色、字体大小3个属性，format指该属性的取值类型 -->
+			<attr name="titleText" format="string" />
+			<attr name="titleTextColor" format="color" />
+			<attr name="titleTextSize" format="dimension" />
+			<declare-styleable name="CustomTitleView">
+				<attr name="titleText" />
+				<attr name="titleTextColor" />
+				<attr name="titleTextSize" />
+			</declare-styleable>
+		</resources>
+		
+		https://www.cnblogs.com/CVstyle/p/6399188.html
+		
+		
+		
+    18：MVP模式：
+	   https://www.jianshu.com/p/479aca31d993		
+	   
+	   
+	   
+	19:
+
+		正文
+		1.EventBus(事件处理)
+		2.xUtils(网络、图片、ORM)
+		xUtils 分为四大模块：
+		  1、 DbUtils 模块：Android 中的 orm 框架(对象关系映射，它的作用是在关系型
+		  数据库和业务实体对象之间作为一个映射)，一行代码就可以进行增删改查。 (Logo新闻内容缓存到数据库 当没有网络的时候)
+		  2、ViewUtils 模块：android 中的 ioc 框架(生命周期由框架控制)，完全注解的方式就可以进行对 UI 绑定和事件的绑定。
+		  3 、HttpUtils 模块：(请求服务器 客户端 传过去标示 head=”md5”)
+			a. 支持同步，异步方式的请求。
+			b. 支持大文件上传，上传大文件不会 oom(内存溢出)。
+			c. 支持 GET,POST,DELETE 请求。
+
+		  4、 BitmapUtil 模块：
+
+			可以先说下三级缓存的原理：
+			从缓存中加载。
+			从本地文件中加载(数据库，SD)
+			b. 支持加载网络图片和本地图片。
+			a.加载 bitmap 的时候无需考虑 bitmap 加载过程中出现的 oom(内存溢出)和 android 容器快速滑动的时候出现的图片错位等现象。(16M)
+			c. 内存管理使用的 lru 算法(移除里面是有频率最少的对象)，更好的管理 bitmap 的内存。
+			d.可配置线程加载的数量，缓存的大小，缓存的路径，加载显示的动画等
+
+		3.从网络中加载
+
+			清除缓存是怎么做的?
+			(1)清除内存的缓存。
+			(2)数据库，SD
+			需要添加一下权限<uses-permission android:name="android.permission.INTERNET" /> <uses-permissionandroid:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+			这一天我不钓虾，东西也少吃。母亲很为难，没有法子想。到晚饭时候，外祖母也终于觉察了。
+
+		3.JPush(推送平台)
+			推送的好处：
+			a. 及时主动性。(这是推送服务最基本的特点，即当有新的信息需要提交时，依据传送信息的类型和重要性不同，推送软件会主动提醒用户接收新信息。从而提高了用户获取信息的及时性。)
+			b. 针对目的性。(推送服务提供的信息是根据用户的特定需求定的，这充分体现了用户的个性化需求。这种个性化的服务还是动态的，用户只需在定制之初描述信息需求，推送软件就会自动跟踪用户的使用倾向，实时地完成特定信息的推送。)
+			c. 便捷高效性。(用户只需输入一次信息请求，就可获得连续的信息服务。推送服务还采用信息代理机制，可以自动跟踪用户的信息需求。这样的推送服务既节省了用户主动拉取的时间，又减少了冗余信息的传递提高了信息的匹配度，从而大大方便了用户，提高了效率。)
+			我们在项目中主要使用的是极光推送，在极光的官网里(https://www.jpush.cn/)下载 android的 demo，将 demo 中的 aapid 换成自己申请的，测试推送，然后集成到自己的项目中去。
+
+		4.友盟(统计平台)
+
+		5.有米(优米)(广告平台)
+
+		6.百度地图
+			1) 下载百度地图移动版 API(Android)开发包
+			要在 Android 应用中使用百度地图 API，就需要在工程中引用百度地图 API 开发包，这个开发包包含两个文件：baidumapapi.jar 和 libBMapApiEngine.so。下载址：http://dev.baidu.com/wiki/static/imap/files/BaiduMapApi_Lib_Android_1.0.zip
+			2) 申请 API Key
+			和使用 Google map api 一样，在使用百度地图 API 之前也需要获取相应的 API Key。百度地图 API
+			Key 与你的百度账户相关联，因此您必须先有百度帐户，才能获得 API Key;并且，该 Key 与您引用API 的程序名称有关。
+			百度 API Key 的申请要比 Google 的简单多了，其实只要你有百度帐号，应该不超过 30 秒就能完成
+			API Key 的申请。申请地址：http://dev.baidu.com/wiki/static/imap/key/
+
+		3) 创建一个 Android 工程
+			这里需要强调一点：百度地图移动版 api 支持 Android 1.5 及以上系统，因此我们创建的工程应基于 Android SDK 1.5 及以上。
+			工程创建完成后，将 baidumapapi.jar 和 libBMapApiEngine.so 分别拷贝到工程的根目录及libs/armeabi 目录下，并在工程属性->Java Build Path->Libraries 中选择“Add JARs”，选定 baidumapapi.jar，这样就可以在应用中使用百度地图 API 了。
+		7.bmob(服务器平台、短信验证、邮箱验证、第三方支付)
+		8.阿里云 OSS(云存储)
+		9.ShareSDK(分享平台、第三方登录)
+		  SDK 简介： ShareSDK 是为 iOS 的 APP 提供社会化功能的一个组件，开发者只需 10 分钟即可集成到自己的 APP 中，它不仅支持如 QQ、微信、新浪微博、腾讯微博、开心网、人人网、豆瓣、网易微博、搜狐微博、facebook、twitter、google+等国内外主流社交平台，还有强大的统计分析管理后台，可以实时了解用户、信息流、回流率、传播效应等数据，有效的指导日常运营与推广，同时为 APP 引入更多的社会化流量。
+
+			主要功能：
+			a. 支持分享到主流的各大平台上。(国内主要的分享平台：QQ ， 微信 ，新浪微博 ，腾讯微博 国外的：facebook twitter google+)
+			b. 支持获取授权用户资料及其他用户资料，可以通过 sdk 制作使用新浪微博登录，QQ 登录等。
+			c. 支持关注官方微博，支持@好友，插入话题，图片。
+			d. 支持一键分享，用户可以一次性将内容分享至全部的社交平台。
+			使用：
+			(1)获取 SharedSDK。(SharedSDK 官网：http://wiki.mob.com/)
+			(2)将 SharedSDK 集成(导入)到项目的 libs 目录下。
+			(3)配置 AndroidManifest.xml 权限
+			uses-permission android:name="android.permission.READ_CONTACTS" /><uses-permission android:name="android.permission.READ_PHONE_STATE" /><uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" /><uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" /><uses-permission android:name="android.permission.ACCESS_WIFI_STATE" /><uses-permission android:name="android.permission.INTERNET" /><uses-permission android:name="android.permission.RECEIVE_SMS" /> <uses-permission android:name="android.permission.GET_TASKS" /><uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+			(4)添加代码，启动 SDK。SMSSDK.initSDK(this, “<您的 appkey>”, “<您的 appsecret>”)
+
+		10.Gson(解析 json 数据框架)
+		根据服务器返回的 Gson 数据来设计类的模型，让 Gson 解析字符串为对应的对象模型。简来讲就是 根据 json 的数据结构定义出相应的 javabean -→”new”出 Gson 的实例gson—→gson.fromJson(jsonString,JavaBean.class) 即可.
+		面试概要：
+			可以先说下 Gson 的作用，然后在向后拓展下。(Gson 呢，是google 提供的一个快速解析 json数据的开源框架,原来我们解析数据的时候都是 jsonObject jsonArray 一层层解析，
+			我发现这样层层解析很浪费时间，于是我在业余时间研究了 Gson，Gson 满足了我们快速开发的特性，只要从服务器拿到 json 数据用 Gson 解析，
+			Gson 就会返回一个数据对象，我们就可以直接对数据进行操作了。原来解析可能需要十几分钟的事，现在两三分钟就搞定了)
+			补充：为什么数据要以 json 形式传输?
+
+		1 易读性
+		2 高效率
+		11.imageLoader (图片处理框架)
+		12.zxing (二维码扫描)
+		13 .Okhttp
+		14.Retrofit
+		15.Glide	
+		
+		
+	20：使用过那些自定义View
+	
+	
+	
+	21: 流式布局的实现过程：
+	    https://www.jianshu.com/p/05954091c650
+		
+		
+    22:Android系统性能调优
+        本文主要以Android的渲染机制、UI优化、多线程的处理、缓存处理、电量优化以及代码规范等几方面来简述Android的性能优化 	
+      	https://www.cnblogs.com/vincent0519/p/6060114.html
+		
+    23：CPU和GPU的关系:
+	    https://blog.csdn.net/m0_37876745/article/details/78309093
+		
+	    CPU和GPU之所以大不相同，是由于其设计目标的不同，它们分别针对了两种不同的应用场景。CPU需要很强的通用性来处理各种不同的数据类型，
+		同时又要逻辑判断又会引入大量的分支跳转和中断的处理。这些都使得CPU的内部结构异常复杂。
+		
+		而GPU面对的则是类型高度统一的、相互无依赖的大规模数据和不需要被打断的纯净的计算环境。
+		
+专家级别的面试:
+    1：反射创建对象有哪几种		
+		通过反射来生成对象有两种方式：
+
+        1、通过Class对象的newInstance()方法来创建Class对象对应类的实例。这个方法是使用Class对象对应类的默认构造器创建对象，这就要求Class对象对应类必须要有默认构造器。
+        2、使用Class对象获取指定的Constructor对象，调用Constructor对象的newInstance()方法来创建Class对象对应类的实例。这个方法可以使用Class对象对应类的任意指定的构造器来创建实例。
+
+        第一种方法比较常见，在spring这些框架中，会根据配置文件自动创建类的实例并注入到依赖此类的类中。这时候用的最多的就是默认构造器。像是在spring的配置文件中，我们提供的是某个类的全类名，这种情况要创建类的实例，就必须使用反射了。
+
+	2:单例模式如何做到防止反射和序列化错乱
+      	
+	    单例模式的序列化
+		单例模式的侵犯
+		下面是解决代码(我随便拿一个单例举例)：
+
+		解决办法：
+
+		序列化单例，重写readResolve()方法
+		在私有构造器里判断intance，如存在则抛异常(防止反射侵犯私有构造器)
+		我把这两个放在同一个类里执行验证，所以下面需要各位亲手运行代码感受了。= =会有收获的。
+		public class SingletonDemo6 implements Serializable{  
+			  
+			// 类初始化时，不初始化这个对象（延迟加载，真正用的时候再创建）  
+			private static SingletonDemo6 instance;  
+			  
+			private SingletonDemo6() {  
+				// 防止反射获取多个对象的漏洞  
+				if (null != instance) {  
+					throw new RuntimeException("单例模式被侵犯！");  
+				}  
+			}  
+			  
+			public static synchronized SingletonDemo6 getInstance() {  
+				if (null == instance)  
+					instance = new SingletonDemo6();  
+				return instance;  
+			}  
+		  
+			// 防止反序列化获取多个对象的漏洞。  
+			// 无论是实现Serializable接口，或是Externalizable接口，当从I/O流中读取对象时，readResolve()方法都会被调用到。  
+			// 实际上就是用readResolve()中返回的对象直接替换在反序列化过程中创建的对象。  
+			private Object readResolve() throws ObjectStreamException {    
+				return instance;  
+			}  
+		} 
+
+		package com.zz.designpatterns.createpattern.singletonpattern;
+		 
+		import java.io.FileInputStream;
+		import java.io.FileOutputStream;
+		import java.io.ObjectInputStream;
+		import java.io.ObjectOutputStream;
+		import java.lang.reflect.Constructor;
+		 
+		public class ReflectAndSerialSingleton {
+				public static void main(String[] args) throws Exception {  
+					SingletonDemo6 sc1 = SingletonDemo6.getInstance();  
+					SingletonDemo6 sc2 = SingletonDemo6.getInstance();    
+					System.out.println(sc1);  
+					System.out.println(sc2);
+					System.out.println(sc1.equals(sc2)); // sc1，sc2是同一个对象  
+					 
+					 /**
+					  * 通过反序列化的方式构造多个对象（类需要实现Serializable接口）  
+					  */
+					// 1. 把对象sc1写入硬盘文件  
+					FileOutputStream fos = new FileOutputStream("object.txt");  
+					ObjectOutputStream oos = new ObjectOutputStream(fos);  
+					oos.writeObject(sc1);  
+					oos.close();  
+					fos.close();  
+					  
+					// 2. 把硬盘文件上的对象读出来  
+					ObjectInputStream ois = new ObjectInputStream(new FileInputStream("object.txt"));  
+					// 如果对象定义了readResolve()方法，readObject()会调用readResolve()方法。从而解决反序列化的漏洞  
+					SingletonDemo6 sc5 = (SingletonDemo6) ois.readObject();  
+					// 反序列化出来的对象，和原对象，不是同一个对象。如果对象定义了readResolve()方法，可以解决此问题。  
+					System.out.println(sc5);   
+					ois.close(); 
+					
+					/**
+					 * 通过反射的方式直接调用私有构造器（通过在构造器里抛出异常可以解决此漏洞）  
+					 */
+					Class<SingletonDemo6> clazz = SingletonDemo6.class; 
+					Constructor<SingletonDemo6> c = clazz.getDeclaredConstructor(null); 
+					c.setAccessible(true); // 跳过权限检查 
+					SingletonDemo6 sc3 = c.newInstance(); 
+					SingletonDemo6 sc4 = c.newInstance(); 
+					System.out.println(sc3);  // sc3，sc4不是同一个对象 
+					System.out.println(sc4);
+					  
+					 
+			}
+		}  	
+		
+		
+		
+    3：对象的浅拷贝和深拷贝	：
+	    进行了深拷贝之后，无论是什么类型的属性值的修改，都不会影响另一个对象的属性值。
+		
+		①对于数据类型是基本数据类型的成员变量，浅拷贝会直接进行值传递，也就是将该属性值复制一份给新的对象。因为是两份不同的数据，所以对其中一个对象的该成员变量值进行修改，
+		  不会影响另一个对象拷贝得到的数据。②对于数据类型是引用数据类型的成员变量，比如说成员变量是某个数组、某个类的对象等，那么浅拷贝会进行引用传递，
+		  也就是只是将该成员变量的引用值（内存地址）复制一份给新的对象。因为实际上两个对象的该成员变量都指向同一个实例。
+		  在这种情况下，在一个对象中修改该成员变量会影响到另一个对象的该成员变量值。
+		
+       https://www.cnblogs.com/shakinghead/p/7651502.html	
+	   
+	   
+	4:UI卡顿原因
+       	https://www.jianshu.com/p/4f2a95a7f586
+		
+		
+    5：进程保活
+     https://www.jianshu.com/p/dd01580743e7	
+	 
+	
+    6: Intent怎么处理过大的数据	 
+     方法一：将须要传递的数据写在暂时文件或者数据库中，再跳转到另外一个组件的时候再去读取这些数据信息，这样的处理方式会因为读写文件较为耗时导致程序执行效率较低；
+     方法二：将须要传递的数据信息封装在一个静态的类中（注意当前组件和要跳转到的组件必须属于同一个进程，由于进程之间才可以共享数据），
+	         在当前组件中为类设置内容，然后再跳转到的组件中去取，这样的处理方式效率非常高，可是会破坏程序的独立性。
+			 
+	7:webview内存优化
+	  https://blog.csdn.net/pangjl1982/article/details/80951583	
+
+    8:热修复的原理
+      https://blog.csdn.net/u010046451/article/details/80404779
+	  
+	9:图片优化
+	 https://www.cnblogs.com/zxxiaoxia/p/4508095.html  
+	 
+	10：子线程中能不能 new handler？为什么 
+	 https://blog.csdn.net/caohb2013/article/details/81875613 
+	 
+	11:Android 中的动画有哪几类，它们的特点和区别是什么
+    	1、Drawable Animation
+             帧动画，Frame动画，指通过指定的每一帧的图片和播放时间，有序的进行播放而形成的动画效果
+
+		2、View Animation
+			视图动画，也就是所谓的补间动画。指通过指定View的初始状态、变化时间、方式、通过一系列的算法去进行图片变换，从而实现动画效果。主要有scale、alpha、Translate、Rotate四种效果。 
+			注意：只是在视图层实现了动画效果，并没有真正改变View的属性。
+
+		3、Property Animation
+			属性动画，通过不断地改变View的属性，不断重绘而形成动画效果。相比较视图动画，View的属性是真正改变了。 
+			注意：Android3.0(API 11)以上才支持。
+			
+			
+  初级:
+    1：两个Activity之间跳转时必然会执行的是哪几个方法生命周期。
+	  这里我认为主要考察两个知识点：
+		1. 假设当前 Activity 为 A，如果这时用户打开一个新的 Activity B，那么 B 的 onResume() 和 A 的 onPause(）哪个先执行？
+		2. 当 Activity A 打开的新 Activity B 为透明主题时，Activity A 回调的生命周期？
+
+		问题 1 答案：
+		    A 的 onPause() 先执行，然后才会执行 B 的 onResume()。
+		问题 2 答案:
+		    Activity A 的 onStop() 方法不会执行，其它生命周期和正常 Activity 跳转执行一致。
+
+		    综上：
+		    a. 正常情况下 Activity A 跳转到 Activity B 时:
+		    A调用 onCreate() 方法 -> onStart() 方法 -> onResume() 方法，此时 A 前台可见。当 A 跳转到 B 时，A 调用 onPause() 方法，然后调用新的 Activity B 中的 onCreate() 方法 -> onStart() 方法 -> onResume() 方法。最后 A 再调用onStop()方法。
+		    b. 当 Activity B 为透明主题时:
+		    除了最后 Activity A 不调用 onStop() 方法之外，其它都和 a 中的一样。
+		
+    2:如何将一个Activity设置成窗口的样式。
+     	activity中配置android:theme="@android:style/Theme.Dialog",另外
+        android:theme="@android:style/Theme.Translucent"是设置透明
+          https://blog.csdn.net/u011277123/article/details/53389372
+		   
+		   
+    3：两个Activity之间怎么传递数据？
+      https://blog.csdn.net/u010112268/article/details/83832021	
+	  
+	4：怎么样在启动一个Activity的时候同时启动一个service？
+      https://blog.csdn.net/kenderson/article/details/49152987	
+	  
+	5:什么是Service以及描述下它的生命周期。Service有哪些启动方法，有什么区别，怎样停用Service？
+
+      两种启动 Service 的方式 Context.startService() 和 Context.bindService()。 区别 为 
+		Context.startService()：Service 会经历 onCreate -> onStart（如果 Service 还没有运行， 则android先调用onCreate()然后调用onStart()；如果Service已经运行，则只调用onStart()， 
+		 所以一个 Service 的 onStart 方法可能会重复调用多次 ）； stopService 的时候直接 onDestroy，如果是调用者自己直接退出而没有调用 stopService 的话，
+		 Service 会一直在后 台运行。该 Service 的调用者再启动起来后可以通过 stopService 关闭 Service  
+
+
+ 		Context.bindService()：Service 会经历 onCreate() -> onBind()，onBind 将返回给客户端 一个 IBind 接口实例，IBind 允许客户端回调服务的方法，
+        比如得到 Service 运行的状态或其 他操作。这个时候把调用者（Context，例如 Activity）会和 Service 绑定在一起，Context 退出了，
+		Srevice 就会调用 onUnbind -> onDestroyed 相应退出，所谓绑定在一起就共存亡 了 。
+
+ 		停用 service 使用 context.stopService() 
+	
+	6：BroadcastReceiver注册方式:
+	    https://www.jianshu.com/p/818b3b318963
+		
+		
+    7:请介绍下Android的数据存储方式。
+      https://www.jianshu.com/p/5223a77a2a32	
+	  
+	8：ListView如何提高其效率？
+      https://blog.csdn.net/wxhpzg123/article/details/51507564	
