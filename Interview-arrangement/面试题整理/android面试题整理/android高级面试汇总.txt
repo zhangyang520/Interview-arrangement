@@ -1,0 +1,120 @@
+1.android 内存泄漏是怎么回事？怎么处理？
+
+  答：内存泄漏主要原因是开发者在一些静态变量的引用或者系统服务资源使用完毕后没有及时的释放导致出现内存泄漏。多个内存泄漏还会导致内存溢出。
+
+2.消息处理机制是怎么个处理过程？
+
+   答：消息处理机制从字面意思来看，就是Android开发中使用该机制来进行消息的传递。主要运用在UI线程和子线程，子线程和子线程之间的消息传递。
+       其中包含了有三个概念，Handler，Looper，MessageQueue。各自都是什么功能呢，首先MessageQueue是一个消息队列，它是一个链表的结构，遵循着先进先出的原则，
+	    Android中通过Message对象发送消息到MessageQueue中。Looper是一个消息传递的运输工具，它扮演的角色是，运送MessageQueue给handle去处理。Handle是一个消息接收并处理的平台，它接收消息并且处理它。
+
+3.什么是自定义组件，你在项目中用到了哪些？
+
+  答：自定义组件分为三种，分别为组合组件、继承组件、自绘组件。
+
+      项目中，组合组件很常用，大多数App都会用到自定义的title，一个title中有搜索、返回键、标题文字。这就是一个组合型的组件；
+
+      继承组件的话，主要是在原先系统控件不满足要求的情况下，为了拓展它的功能而运用的。比如exctend LinearLayout、ListView，AutoCompleteTextview等，实现OnMeasure、onDraw。
+
+      自绘组件，主要是图形图像方面运用的比较多，比如勾画一个饼状图、仪表盘。主要是exctend View 实现onDraw方法，根据坐标点进行绘制。
+
+4.activity的生命周期
+
+    答：正常的Activity的生命周期是：onCreate，onStart，onResume，onStop，onDestory
+        1:A页面跳B页面，然后finish B ? A生命周期是：onPaused，onStop；onRestart，onResume
+        2:处于A页面按home键 ?A生命周期：onPaused，onStop
+
+5.四大启动模式，分别的说一下有什么区别？
+
+   答：首先四大启动模式分别是 standard、singleTask、singleTop、singleInstance。
+
+   standard：标准启动模式，也是Android默认的启动模式。
+   singleTop：如果设置了该模式，当前的Acitivity如果存在任务栈顶，则不需要创建新的activity；
+   singleTask：如果设置了该模式，当前的Acitivity如果存在任务栈中，则不需要创建新的activity实例，并把这个activity之上的实例，通通出栈；
+   singleInstance：如果设置了该模式，当前的Acitivity如果存在该应用中的任何一个任务栈中，则不需要创建新的activity；
+
+6.项目中用到了哪些框架？以及了解程度如何？
+
+   答：okhttp，imageLoader，zxing，xutils，pushSDK，高德Sdk，百度FaceSDK
+
+7.android中事件分发机制的内部流程？详解recyclerView用途
+
+   答：Android的事件分发机制是指用户创建一个点击事件，系统会将该事件分发到每一层布局中。其中一共有三层布局，
+   分别是activity层---->viewGroup层---->view层，每一层都有实现一个dispatchTouchEvent、onTouchEvent的方法。
+   事件分发是先通过由上而下的机制进行事件的传递。若在该层的dispatchTouchEvent方法中处理最后return true的话，
+   那么事件将会被该层消费，不会继续往下层传递.若是return false，则时间继续往下层传递至View层，然后最终被view的onTouchEvent消费，
+   然后按照自下而上的方式传递给每一层的onTouchEvent方法，最后传递给用户一个事件处理的结果。
+
+      recyclerView实际上是ListView和GridView的升级版。它存在于Android L support.v7包中。与ListView对比增加了滑动删除、拖拽的实现，和自动刷新数据的实现。
+	  开发者只要实现其中的ItemTouchHelper内部类方法中对应的滑动删除和拖拽的方法就可以接收其回调。要
+	  注意的是需要和recyclerView进行绑定。itemTouchHelper.attachToRecyclerView(mrecyclerView).
+
+8.你在项目中有哪些常用或者遇到过的设计模式，举几个例子，并说说特点。
+
+   答：常用的设计模式有建造者模式、单例模式、工厂模式、原型模式、适配器模式。
+   若想详细了解参考这里 http://blog.csdn.net/ruizhenggang/article/details/78837183
+
+9.自定义歌词的滚动和播放是怎么实现的？
+
+  答：自定义歌词有两种实现方式。一种是Textview覆盖的方式，实现播放中的歌词高亮；一种是使用drawtext方式画出歌词。
+  首先程序会读取目录下的歌词文件，存储在对应的对象中，包括每节歌词的播放时间和时长；然后获取对应的音频文件的总时长。通过简单的数学计算，
+  然后分别开启两个线程，一个播放音乐一个执行对应的歌词。若播到对应的歌词则通过页面显示的文字，用高亮文字进行覆盖。
+  这是一种简单的歌词播放功能。还有一种是通过drawText方式，将正在播放的歌词直接用不同的颜色绘画出来。
+
+10.自定义折线图和自定义的手势密码实现的原理？
+
+答：
+
+11.在项目中常用哪些布局，屏幕适配是怎么做的？
+
+   答：常用的布局有LinearLayout，realativeLayout，FrameLayout。屏幕适配尽量使用linearLayout来做。或者可以使用百分比适配的方式。
+
+12.详细描述一下AscynTask是什么？
+
+答：
+
+13.android的四大组件，以及组件与组件之间是怎么交互的？数据的存储有哪些？
+
+答：四大组件有 activity、Service、contentProvider、broadcastReceiver
+
+通过Intent来进行相互的调用。
+
+数据存储有：sharedPerfence，fileOutStream，SDCard，DButils，http存储。
+
+14.android中listView怎么实现左滑删除的？然后它是怎么避免左滑事件和上下滑事件不冲突的？
+
+答：
+
+15.android中一个图片的list，实现点击图片，根据点击点展开一个activity，实现方案。
+
+答：
+
+16.handler中，若连续发送多条消息，且第一条消息发送后睡两秒，第二条睡眠5秒，第三条正常发送，执行的顺序是什么？
+
+答：
+
+17.有使用过哪些系统的组件或功能呢？
+
+答：
+
+18.对于luncherMode了解多少？
+
+答：
+
+19.service的使用，startService和bindService有什么区别？
+
+答：
+
+20.有了解boradCastReceiver的优先级吗？
+
+答：
+
+21.获取android根布局，以及rootview下所有的button，并设置颜色？
+
+22.service中开启子线程和Activity中开启子线程对比
+
+23.bitmap的缓存存在哪？怎么获取？
+
+24.activity怎样传递数据到Fragment？Fragment怎么传递数据到Activity？
+
+25.性能优化,怎么保证应用启动不卡顿
